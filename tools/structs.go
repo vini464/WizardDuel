@@ -1,4 +1,4 @@
-package protocol
+package tools
 
 type TurnPhase int
 type Cmd int
