@@ -35,7 +35,23 @@ func ReceiveHandler(conn net.Conn, received_data chan []byte, wg *sync.WaitGroup
     if (err != nil){
       wg.Done()
       return
-    }
+   }
     received_data <- data
+  }
+}
+
+// Thread que lida com o envio de mensagens pela conexão estabelecida
+func SendHandler(conn net.Conn, send_data chan []byte, wg *sync.WaitGroup){
+  for {
+    data := <-send_data
+    data_size := uint32(len(data))
+    header := make([]byte, 4)
+    binary.BigEndian.PutUint32(header, data_size)
+    _, err := conn.Write(header)
+    if (err != nil){
+      wg.Done()
+      return
+    }
+    _, err = conn.Write(data)
   }
 }
