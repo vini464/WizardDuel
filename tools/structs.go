@@ -78,6 +78,10 @@ type Card struct {
 	EFFECTS []Effect `json:"effects"`
 }
 
+type Serializable interface {
+  Request | Response | UseInfo | Card | Effect
+}
+
 // example:
 /**
 {
