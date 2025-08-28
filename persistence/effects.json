@@ -1,0 +1,32 @@
+{
+  "effects_reference": {
+    "damage": {
+      "description": "Deal damage to opponent. Damage reduces shield first, excess applies to life."
+    },
+    "heal": {
+      "description": "Restore life points. Cannot exceed the initial maximum life (10 by default)."
+    },
+    "shield": {
+      "description": "Grant shield points. Shield absorbs incoming damage before life is affected."
+    },
+    "energy": {
+      "description": "Gain additional mana stones (temporary or permanent depending on effect design)."
+    },
+    "draw": {
+      "description": "Draw cards from your deck into your hand."
+    },
+    "discard": {
+      "description": "Force the opponent (or player) to discard cards from their hand."
+    },
+    "aoe_damage": {
+      "description": "Deal damage to multiple enemy targets (future-proof for more than 1v1)."
+    },
+    "next_spell_damage_bonus": {
+      "description": "Increase the damage of the next spell cast by this player."
+    },
+    "destroy_enemy_shield": {
+      "description": "Remove all or part of the opponent’s shield instantly."
+    }
+  }
+}
+
