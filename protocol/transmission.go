@@ -18,3 +18,24 @@ func receiveMessage(conn net.Conn, buffer []byte) error {
 	}
 	return nil
 }
+
+
+// Thread que lida com o recebimento de mensagens, manda os dados recebidos para o canal received_data
+func ReceiveHandler(conn net.Conn, received_data chan []byte, wg *sync.WaitGroup) { 
+  header := make([]byte, 4)
+  for {
+    err := receiveMessage(conn, header)
+    if (err != nil){
+      wg.Done()
+      return
+    }
+    data_length := int(binary.BigEndian.Uint32(header))
+    data := make([]byte, data_length)
+    err = receiveMessage(conn, data)
+    if (err != nil){
+      wg.Done()
+      return
+    }
+    received_data <- data
+  }
+}
