@@ -41,11 +41,6 @@ type UserInfo struct {
 	send_channel chan []byte
 }
 
-type DB_user struct {
-	user string `json:"user"`
-	hash string `json:"hash"`
-}
-
 var QUEUE = make([]string, 0)
 var ONLINE_PLAYERS = make(map[string]UserInfo)
 
@@ -102,26 +97,52 @@ func handleReceive(send_channel chan []byte, income []byte) {
 	err := tools.Deserializejson(income, &request)
 	if err != nil {
 		fmt.Println("[error] - error while deserializing:", err)
+		sendResponse("error", "Internal Error", send_channel)
+		return
 	}
 	switch request.CMD {
 	case tools.Register.String():
 		data, ok := request.DATA.(tools.UserInfo)
 		if !ok {
-			fmt.Println("[error] - bad request")
-			break
+			sendResponse("error", "Bad Request", send_channel)
+			return
 		}
 		ok, desc := tools.CreateUser(data, "bd/users.json")
-		var cmd string
 		if ok {
-			cmd = "ok"
+			sendResponse("ok", desc, send_channel)
+			return
 		} else {
-			cmd = "error"
+			sendResponse("error", desc, send_channel)
+			return
 		}
-		var response []byte
-		for response, err = tools.SerializeMessage(cmd, desc); err != nil; {
-		}
-		send_channel <- response
 	case tools.Login.String():
+		data, ok := request.DATA.(tools.UserInfo)
+		if !ok {
+			sendResponse("error", "Bad Request", send_channel)
+			return
+		}
+		_, ok = ONLINE_PLAYERS[data.USER]
+		if ok {
+			sendResponse("error", "User Already Logged", send_channel)
+			return
+		}
+		users, err := tools.GetUsers("bd/users.json")
+		if err != nil {
+			sendResponse("error", "Unable to Find User", send_channel)
+			return
+		}
+		for _, user := range users {
+			if user.USER == data.USER && user.PSWD == data.PSWD {
+				fmt.Println("[debug] - User:", user.USER, "is now logged!")
+				userInfo := UserInfo{user.USER, false, "", send_channel}
+        ONLINE_PLAYERS[user.USER] = userInfo
+        sendResponse("ok", "User Logged In", send_channel)
+        return
+			}
+		}
+		sendResponse("error", "Wrong User Or Password", send_channel)
+		return
+
 	case tools.Logout.String():
 	case tools.GetBooster.String():
 	case tools.Play.String():
@@ -136,8 +157,16 @@ func handleReceive(send_channel chan []byte, income []byte) {
 	}
 }
 
+func sendResponse(cmd string, data any, send_channel chan []byte) {
+	fmt.Println("[error] -", data)
+	var response []byte
+	var err error
+	for response, err = tools.SerializeMessage(cmd, data); err != nil; {
+	}
+	send_channel <- response
+}
+
 func hashPassword(pswd string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(pswd), bcrypt.DefaultCost)
 	return string(bytes), err
 }
-
