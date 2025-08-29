@@ -97,6 +97,17 @@ func NextPhase(actualPhase TurnPhase) TurnPhase {
 	}
 }
 
+func CreateMessage(cmd string, data any) Message {
+  messase := Message{CMD: cmd, DATA: data}
+  return messase
+}
+
+func SerializeMessage(cmd string, data any) ([]byte, error) {
+  message := CreateMessage(cmd, data)
+  serialzed, err := SerializeJson(message)
+  return serialzed, err
+} 
+
 // example:
 /**
 {

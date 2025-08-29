@@ -1,15 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
-	"os"
 	"sync"
 
 	"github.com/vini464/WizardDuel/tools"
-  "golang.org/x/crypto/bcrypt"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type PlayerData struct {
@@ -107,17 +105,22 @@ func handleReceive(send_channel chan []byte, income []byte) {
 	}
 	switch request.CMD {
 	case tools.Register.String():
-    data, ok := request.DATA.(tools.UserInfo)
-    if (!ok) {
-      fmt.Println("[error] - bad request")
-      break
-    }
-    ok, desc := tools.CreateUser(data, "bd/users.json")
-    if (ok) {
-      
-    } else {
-
-    }
+		data, ok := request.DATA.(tools.UserInfo)
+		if !ok {
+			fmt.Println("[error] - bad request")
+			break
+		}
+		ok, desc := tools.CreateUser(data, "bd/users.json")
+		var cmd string
+		if ok {
+			cmd = "ok"
+		} else {
+			cmd = "error"
+		}
+		var response []byte
+		for response, err = tools.SerializeMessage(cmd, desc); err != nil; {
+		}
+		send_channel <- response
 	case tools.Login.String():
 	case tools.Logout.String():
 	case tools.GetBooster.String():
@@ -134,15 +137,7 @@ func handleReceive(send_channel chan []byte, income []byte) {
 }
 
 func hashPassword(pswd string) (string, error) {
-  bytes, err := bcrypt.GenerateFromPassword([]byte(pswd), bcrypt.DefaultCost)
-  return string(bytes), err
+	bytes, err := bcrypt.GenerateFromPassword([]byte(pswd), bcrypt.DefaultCost)
+	return string(bytes), err
 }
 
-
-func mountResponse(code int, description string, data any) tools.Response {
-	var response tools.Response
-	response.CODE = code
-	response.DESCRIPTION = description
-	response.DATA = data
-	return response
-}
