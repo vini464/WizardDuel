@@ -16,3 +16,4 @@ func Deserializejson[T Serializable](serialized []byte, data *T) error {
   err := json.Unmarshal(serialized, data)
   return err
 }
+

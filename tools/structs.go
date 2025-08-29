@@ -9,6 +9,7 @@ const (
 	Main
 	Maintenance
 	End
+	StandBy
 	Register Cmd = iota
 	Login
 	Logout
@@ -28,6 +29,7 @@ var PhaseName = map[TurnPhase]string{
 	Main:        "main",
 	Maintenance: "maintenance",
 	End:         "end",
+	StandBy:     "standby",
 }
 var CmdName = map[Cmd]string{
 	Register:    "register",
@@ -58,11 +60,11 @@ type Request struct {
 type Response struct {
 	CODE        int    `json:"code"`
 	DESCRIPTION string `json:"description"`
-	DATA        any    `json:"data"`
+	DATA        any    `json:"data.omitempty"`
 }
 
 // Algumas estruturas usadas para enviar mensagens
-type UseInfo struct {
+type UserInfo struct {
 	USER string `json:"user"`
 	PSWD string `json:"pswd"`
 }
@@ -79,7 +81,26 @@ type Card struct {
 }
 
 type Serializable interface {
-  Request | Response | UseInfo | Card | Effect
+	Request | Response | UserInfo | Card | Effect | []UserInfo
+}
+
+func NextPhase(actualPhase TurnPhase) TurnPhase {
+	switch actualPhase {
+	case StandBy:
+		return Refill
+	case Refill:
+		return Draw
+	case Draw:
+		return Main
+	case Main:
+		return Maintenance
+	case Maintenance:
+		return End
+	case End:
+		return StandBy
+	default:
+		return actualPhase
+	}
 }
 
 // example:
