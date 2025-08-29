@@ -34,7 +34,7 @@ type CardSet struct {
 	legendary []tools.Card
 }
 
-type UserInfo struct {
+type UserCredentials struct {
 	username     string
 	paried       bool
 	opponent     string // username do oponente
@@ -42,7 +42,7 @@ type UserInfo struct {
 }
 
 var QUEUE = make([]string, 0)
-var ONLINE_PLAYERS = make(map[string]UserInfo)
+var ONLINE_PLAYERS = make(map[string]UserCredentials)
 
 func main() {
 
@@ -103,7 +103,7 @@ func handleReceive(send_channel chan []byte, income []byte, username *string) {
 	}
 	switch request.CMD {
 	case tools.Register.String():
-		data, ok := request.DATA.(tools.UserInfo)
+		data, ok := request.DATA.(tools.UserCredentials)
 		if !ok {
 			sendResponse("error", "Bad Request", send_channel)
 			return
@@ -123,7 +123,7 @@ func handleReceive(send_channel chan []byte, income []byte, username *string) {
 			return
 		}
 	case tools.Login.String():
-		data, ok := request.DATA.(tools.UserInfo)
+		data, ok := request.DATA.(tools.UserCredentials)
 		if !ok {
 			sendResponse("error", "Bad Request", send_channel)
 			return
@@ -147,7 +147,7 @@ func handleReceive(send_channel chan []byte, income []byte, username *string) {
 		for _, user := range users {
 			if user.USER == data.USER && user.PSWD == data.PSWD {
 				fmt.Println("[debug] - User:", user.USER, "is now logged!")
-				userInfo := UserInfo{user.USER, false, "", send_channel}
+				userInfo := UserCredentials{user.USER, false, "", send_channel}
         ONLINE_PLAYERS[user.USER] = userInfo
         sendResponse("ok", "User Logged In", send_channel)
         username = &data.USER

@@ -58,7 +58,7 @@ type Message struct {
 }
 
 // Algumas estruturas usadas para enviar mensagens
-type UserInfo struct {
+type UserCredentials struct {
 	USER string `json:"user"`
 	PSWD string `json:"pswd"`
 }
@@ -75,7 +75,7 @@ type Card struct {
 }
 
 type Serializable interface {
-	Message | UserInfo | Card | Effect | []UserInfo
+	Message | UserCredentials | Card | Effect | []UserCredentials
 }
 
 func NextPhase(actualPhase TurnPhase) TurnPhase {
@@ -107,14 +107,3 @@ func SerializeMessage(cmd string, data any) ([]byte, error) {
   serialzed, err := SerializeJson(message)
   return serialzed, err
 } 
-
-// example:
-/**
-{
-  CMD: "register",
-  DATA: {
-    user: "user",
-    pswd: "passs"
-}
-}
-**/

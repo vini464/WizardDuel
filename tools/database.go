@@ -27,9 +27,9 @@ func overwriteFile(filename string, data []byte) (int, error) {
 }
 
 // save_user (create)
-func CreateUser(new_user UserInfo, filename string) (bool, string) {
+func CreateUser(new_user UserCredentials, filename string) (bool, string) {
 	// lendo o arquivo de usurários
-	users, err := readFile[[]UserInfo](filename)
+	users, err := readFile[[]UserCredentials](filename)
 	if err != nil {
 		return false, err.Error()
 	}
@@ -54,8 +54,8 @@ func CreateUser(new_user UserInfo, filename string) (bool, string) {
 	return true, "User Created Successfully"
 }
 
-func DeleteUser(user_info UserInfo, filename string) (bool, error) {
-	users, err := readFile[[]UserInfo](filename)
+func DeleteUser(user_info UserCredentials, filename string) (bool, error) {
+	users, err := readFile[[]UserCredentials](filename)
 	if err != nil {
 		return false, err
 	}
@@ -82,6 +82,6 @@ func DeleteUser(user_info UserInfo, filename string) (bool, error) {
 	return false, nil
 }
 
-func GetUsers(filename string) ([]UserInfo, error) {
-  return readFile[[]UserInfo](filename)
+func GetUsers(filename string) ([]UserCredentials, error) {
+  return readFile[[]UserCredentials](filename)
 }
