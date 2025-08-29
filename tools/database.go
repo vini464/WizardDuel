@@ -29,7 +29,7 @@ func overwriteFile(filename string, data []byte) (int, error) {
 // save_user (create)
 func CreateUser(new_user UserInfo, filename string) (bool, string) {
 	// lendo o arquivo de usurários
-	users, err := readFile[[]UserInfo]("db/users.json")
+	users, err := readFile[[]UserInfo](filename)
 	if err != nil {
 		return false, err.Error()
 	}
@@ -51,7 +51,7 @@ func CreateUser(new_user UserInfo, filename string) (bool, string) {
 	if err != nil || b == 0 {
 		return false, "Couldn't Save The File"
 	}
-	return true, "User Created"
+	return true, "User Created Successfully"
 }
 
 func DeleteUser(user_info UserInfo, filename string) (bool, error) {

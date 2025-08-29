@@ -107,40 +107,16 @@ func handleReceive(send_channel chan []byte, income []byte) {
 	}
 	switch request.CMD {
 	case tools.Register:
-    var data tools.UserInfo
     data, ok := request.DATA.(tools.UserInfo)
     if (!ok) {
       fmt.Println("[error] - bad request")
       break
     }
-		file, err := os.Open("users.json")
-		for err != nil {
-			file, err = os.Create("users.json")
-		}
-
-		var users []DB_user
-		decoder := json.NewDecoder(file)
-		err = decoder.Decode(&users)
-		if err != nil {
-			fmt.Println("[error] couldn't open users.json file:", err)
-			break
-		}
-    found := false
-    for _, user := range users{
-      if data.USER == user.user {
-        found = true
-      }
-    }
-    if (found) {
-      response := tools.Response{CODE: 402, DESCRIPTION: "User already exist"}
-      bytes,err := tools.SerializeJson(response)
-      if (err != nil){
-        fmt.Println("[error]", err)
-      }else{
-        send_channel <- bytes
-      }
-    } else {
+    ok, desc := tools.CreateUser(data, "bd/users.json")
+    if (ok) {
       
+    } else {
+
     }
 	case tools.Login:
 	case tools.Logout:
