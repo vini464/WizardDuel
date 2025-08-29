@@ -52,15 +52,9 @@ func (cmd Cmd) String() string {
 	return CmdName[cmd]
 }
 
-type Request struct {
-	CMD  Cmd `json:"cmd"`
+type Message struct {
+	CMD  string `json:"cmd"`
 	DATA any `json:"data.omitempty"`
-}
-
-type Response struct {
-	CODE        int    `json:"code"`
-	DESCRIPTION string `json:"description"`
-	DATA        any    `json:"data.omitempty"`
 }
 
 // Algumas estruturas usadas para enviar mensagens
@@ -81,7 +75,7 @@ type Card struct {
 }
 
 type Serializable interface {
-	Request | Response | UserInfo | Card | Effect | []UserInfo
+	Message | UserInfo | Card | Effect | []UserInfo
 }
 
 func NextPhase(actualPhase TurnPhase) TurnPhase {

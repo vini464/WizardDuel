@@ -100,13 +100,13 @@ LOOP:
 }
 
 func handleReceive(send_channel chan []byte, income []byte) {
-	var request tools.Request
+	var request tools.Message
 	err := tools.Deserializejson(income, &request)
 	if err != nil {
 		fmt.Println("[error] - error while deserializing:", err)
 	}
 	switch request.CMD {
-	case tools.Register:
+	case tools.Register.String():
     data, ok := request.DATA.(tools.UserInfo)
     if (!ok) {
       fmt.Println("[error] - bad request")
@@ -118,16 +118,16 @@ func handleReceive(send_channel chan []byte, income []byte) {
     } else {
 
     }
-	case tools.Login:
-	case tools.Logout:
-	case tools.GetBooster:
-	case tools.Play:
-	case tools.SaveDeck:
-	case tools.PlaceCard:
-	case tools.Surrender:
-	case tools.DrawCard:
-	case tools.DiscardCard:
-	case tools.SkipPhase:
+	case tools.Login.String():
+	case tools.Logout.String():
+	case tools.GetBooster.String():
+	case tools.Play.String():
+	case tools.SaveDeck.String():
+	case tools.PlaceCard.String():
+	case tools.Surrender.String():
+	case tools.DrawCard.String():
+	case tools.DiscardCard.String():
+	case tools.SkipPhase.String():
 	default:
 		fmt.Println("[error] - unknown command")
 	}
