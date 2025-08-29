@@ -34,7 +34,7 @@ type CardSet struct {
 	legendary []tools.Card
 }
 
-type UserCredentials struct {
+type UserInfo struct {
 	username     string
 	paried       bool
 	opponent     string // username do oponente
@@ -42,9 +42,10 @@ type UserCredentials struct {
 }
 
 var QUEUE = make([]string, 0)
-var ONLINE_PLAYERS = make(map[string]UserCredentials)
+var ONLINE_PLAYERS = make(map[string]UserInfo)
 
 func main() {
+  var mu sync.Mutex
 
 	fmt.Println("[debug] - iniciando o servidor...")
 	listener, err := net.Listen(tools.SERVER_TYPE, tools.PATH)
@@ -60,11 +61,11 @@ func main() {
 			continue
 		}
 
-		go handleCLient(conn)
+		go handleCLient(conn, &mu)
 	}
 }
 
-func handleCLient(conn net.Conn) {
+func handleCLient(conn net.Conn, mu *sync.Mutex) {
 	var wg sync.WaitGroup
 	receive_channel := make(chan []byte)
 	send_channel := make(chan []byte)
@@ -83,7 +84,7 @@ LOOP:
 	for {
 		select {
 		case income := <-receive_channel:
-			handleReceive(send_channel, income, &username)
+			handleReceive(send_channel, income, &username, mu)
 		case err := <-error_channel:
 			if err == io.EOF {
 				fmt.Println("[error] - client forced to quit")
@@ -93,7 +94,7 @@ LOOP:
 	}
 }
 
-func handleReceive(send_channel chan []byte, income []byte, username *string) {
+func handleReceive(send_channel chan []byte, income []byte, username *string, mu *sync.Mutex) {
 	var request tools.Message
 	err := tools.Deserializejson(income, &request)
 	if err != nil {
@@ -114,7 +115,7 @@ func handleReceive(send_channel chan []byte, income []byte, username *string) {
       return
     }
     data.PSWD = hash // passando a senha por um hash para melhor segurança
-		ok, desc := tools.CreateUser(data, "bd/users.json")
+		ok, desc := tools.CreateUser(data, "bd/users.json", mu)
 		if ok {
 			sendResponse("ok", desc, send_channel)
 			return
@@ -139,7 +140,7 @@ func handleReceive(send_channel chan []byte, income []byte, username *string) {
 			sendResponse("error", "User Already Logged", send_channel)
 			return
 		}
-		users, err := tools.GetUsers("bd/users.json")
+		users, err := tools.GetUsers("bd/users.json", mu)
 		if err != nil {
 			sendResponse("error", "Unable to Find User", send_channel)
 			return
@@ -147,7 +148,7 @@ func handleReceive(send_channel chan []byte, income []byte, username *string) {
 		for _, user := range users {
 			if user.USER == data.USER && user.PSWD == data.PSWD {
 				fmt.Println("[debug] - User:", user.USER, "is now logged!")
-				userInfo := UserCredentials{user.USER, false, "", send_channel}
+				userInfo := UserInfo{user.USER, false, "", send_channel}
         ONLINE_PLAYERS[user.USER] = userInfo
         sendResponse("ok", "User Logged In", send_channel)
         username = &data.USER
