@@ -107,6 +107,12 @@ func handleReceive(send_channel chan []byte, income []byte) {
 			sendResponse("error", "Bad Request", send_channel)
 			return
 		}
+    hash, err := hashPassword(data.PSWD)
+    if (err != nil) {
+      sendResponse("error", "Internal Error", send_channel)
+      return
+    }
+    data.PSWD = hash // passando a senha por um hash para melhor segurança
 		ok, desc := tools.CreateUser(data, "bd/users.json")
 		if ok {
 			sendResponse("ok", desc, send_channel)
@@ -121,6 +127,12 @@ func handleReceive(send_channel chan []byte, income []byte) {
 			sendResponse("error", "Bad Request", send_channel)
 			return
 		}
+    hash, err := hashPassword(data.PSWD)
+    if (err != nil) {
+      sendResponse("error", "Internal Error", send_channel)
+      return
+    }
+    data.PSWD = hash // passando a senha por um hash para melhor segurança
 		_, ok = ONLINE_PLAYERS[data.USER]
 		if ok {
 			sendResponse("error", "User Already Logged", send_channel)
