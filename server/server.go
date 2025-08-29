@@ -45,7 +45,7 @@ var QUEUE = make([]string, 0)
 var ONLINE_PLAYERS = make(map[string]UserInfo)
 
 func main() {
-  var mu sync.Mutex
+	var mu sync.Mutex
 
 	fmt.Println("[debug] - iniciando o servidor...")
 	listener, err := net.Listen(tools.SERVER_TYPE, tools.PATH)
@@ -79,7 +79,7 @@ func handleCLient(conn net.Conn, mu *sync.Mutex) {
 	wg.Add(1)
 	go tools.SendHandler(conn, send_channel, &wg, error_channel)
 
-  var username string
+	var username string
 LOOP:
 	for {
 		select {
@@ -104,83 +104,92 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 	}
 	switch request.CMD {
 	case tools.Register.String():
-		data, ok := request.DATA.(tools.UserCredentials)
-		if !ok {
-			sendResponse("error", "Bad Request", send_channel)
-			return
-		}
-    hash, err := hashPassword(data.PSWD)
-    if (err != nil) {
-      sendResponse("error", "Internal Error", send_channel)
-      return
-    }
-    data.PSWD = hash // passando a senha por um hash para melhor segurança
-		ok, desc := tools.CreateUser(data, "bd/users.json", mu)
-		if ok {
-			sendResponse("ok", desc, send_channel)
-			return
-		} else {
-			sendResponse("error", desc, send_channel)
-			return
-		}
+		register(request, send_channel, mu)
 	case tools.Login.String():
-		data, ok := request.DATA.(tools.UserCredentials)
-		if !ok {
-			sendResponse("error", "Bad Request", send_channel)
-			return
-		}
-    hash, err := hashPassword(data.PSWD)
-    if (err != nil) {
-      sendResponse("error", "Internal Error", send_channel)
-      return
-    }
-    data.PSWD = hash // passando a senha por um hash para melhor segurança
-		_, ok = ONLINE_PLAYERS[data.USER]
-		if ok {
-			sendResponse("error", "User Already Logged", send_channel)
-			return
-		}
-		users, err := tools.GetUsers("bd/users.json", mu)
-		if err != nil {
-			sendResponse("error", "Unable to Find User", send_channel)
-			return
-		}
-		for _, user := range users {
-			if user.USER == data.USER && user.PSWD == data.PSWD {
-				fmt.Println("[debug] - User:", user.USER, "is now logged!")
-				userInfo := UserInfo{user.USER, false, "", send_channel}
-        ONLINE_PLAYERS[user.USER] = userInfo
-        sendResponse("ok", "User Logged In", send_channel)
-        username = &data.USER
-        return
-			}
-		}
-		sendResponse("error", "Wrong User Or Password", send_channel)
-		return
-
+		login(request, send_channel, mu, username)
 	case tools.Logout.String():
-    user, ok := ONLINE_PLAYERS[*username]
-		if !ok {
-			sendResponse("error", "User Already Offline", send_channel)
-			return
-		}     
-    if (!user.paried) {
-      delete(ONLINE_PLAYERS, *username)
-			sendResponse("ok", "Logout Successfully", send_channel)
-			return
-    }
-    
-	case tools.GetBooster.String():
-	case tools.Play.String():
-	case tools.SaveDeck.String():
-	case tools.PlaceCard.String():
+    logout(username, send_channel)
 	case tools.Surrender.String():
+	case tools.PlaceCard.String():
 	case tools.DrawCard.String():
 	case tools.DiscardCard.String():
 	case tools.SkipPhase.String():
+	case tools.GetBooster.String():
+	case tools.Play.String():
+	case tools.SaveDeck.String():
 	default:
 		fmt.Println("[error] - unknown command")
 	}
+}
+
+
+
+func logout(username *string, send_channel chan []byte){
+		user, ok := ONLINE_PLAYERS[*username]
+		if !ok {
+			sendResponse("error", "User Already Offline", send_channel)
+			return
+		}
+		if !user.paried {
+			delete(ONLINE_PLAYERS, *username)
+			sendResponse("ok", "Logout Successfully", send_channel)
+			return
+		}
+}
+
+func login(request tools.Message, send_channel chan []byte, mu *sync.Mutex, username *string) {
+	data, ok := request.DATA.(tools.UserCredentials)
+	if !ok {
+		sendResponse("error", "Bad Request", send_channel)
+		return
+	}
+	hash, err := hashPassword(data.PSWD)
+	if err != nil {
+		sendResponse("error", "Internal Error", send_channel)
+		return
+	}
+	data.PSWD = hash // passando a senha por um hash para melhor segurança
+	_, ok = ONLINE_PLAYERS[data.USER]
+	if ok {
+		sendResponse("error", "User Already Logged", send_channel)
+		return
+	}
+	users, err := tools.GetUsers("bd/users.json", mu)
+	if err != nil {
+		sendResponse("error", "Unable to Find User", send_channel)
+		return
+	}
+	for _, user := range users {
+		if user.USER == data.USER && user.PSWD == data.PSWD {
+			fmt.Println("[debug] - User:", user.USER, "is now logged!")
+			userInfo := UserInfo{user.USER, false, "", send_channel}
+			ONLINE_PLAYERS[user.USER] = userInfo
+			sendResponse("ok", "User Logged In", send_channel)
+			*username = data.USER
+			return
+		}
+	}
+	sendResponse("error", "Wrong User Or Password", send_channel)
+}
+
+func register(request tools.Message, send_channel chan []byte, mu *sync.Mutex) {
+	data, ok := request.DATA.(tools.UserCredentials)
+	if !ok {
+		sendResponse("error", "Bad Request", send_channel)
+		return
+	}
+	hash, err := hashPassword(data.PSWD)
+	if err != nil {
+		sendResponse("error", "Internal Error", send_channel)
+		return
+	}
+	data.PSWD = hash // passando a senha por um hash para melhor segurança
+	ok, desc := tools.CreateUser(data, "bd/users.json", mu)
+	if ok {
+		sendResponse("ok", desc, send_channel)
+		return
+	}
+	sendResponse("error", desc, send_channel)
 }
 
 func sendResponse(cmd string, data any, send_channel chan []byte) {
