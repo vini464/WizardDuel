@@ -78,11 +78,12 @@ func handleCLient(conn net.Conn) {
 	wg.Add(1)
 	go tools.SendHandler(conn, send_channel, &wg, error_channel)
 
+  var username string
 LOOP:
 	for {
 		select {
 		case income := <-receive_channel:
-			handleReceive(send_channel, income)
+			handleReceive(send_channel, income, &username)
 		case err := <-error_channel:
 			if err == io.EOF {
 				fmt.Println("[error] - client forced to quit")
@@ -92,7 +93,7 @@ LOOP:
 	}
 }
 
-func handleReceive(send_channel chan []byte, income []byte) {
+func handleReceive(send_channel chan []byte, income []byte, username *string) {
 	var request tools.Message
 	err := tools.Deserializejson(income, &request)
 	if err != nil {
@@ -149,6 +150,7 @@ func handleReceive(send_channel chan []byte, income []byte) {
 				userInfo := UserInfo{user.USER, false, "", send_channel}
         ONLINE_PLAYERS[user.USER] = userInfo
         sendResponse("ok", "User Logged In", send_channel)
+        username = &data.USER
         return
 			}
 		}
@@ -156,6 +158,17 @@ func handleReceive(send_channel chan []byte, income []byte) {
 		return
 
 	case tools.Logout.String():
+    user, ok := ONLINE_PLAYERS[*username]
+		if !ok {
+			sendResponse("error", "User Already Offline", send_channel)
+			return
+		}     
+    if (!user.paried) {
+      delete(ONLINE_PLAYERS, *username)
+			sendResponse("ok", "Logout Successfully", send_channel)
+			return
+    }
+    
 	case tools.GetBooster.String():
 	case tools.Play.String():
 	case tools.SaveDeck.String():
