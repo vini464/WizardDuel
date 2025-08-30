@@ -38,14 +38,15 @@ type UserInfo struct {
 	paried       bool
 	opponent     string // username do oponente
 	send_channel chan []byte
-  data  tools.UserData
+	data         tools.UserData
 }
 
 var QUEUE = make([]string, 0)
-var ONLINE_PLAYERS = make(map[string]UserInfo)
+var ONLINE_PLAYERS = make(map[string]*UserInfo)
 
 func main() {
 	var mu sync.Mutex
+  var p_mu sync.Mutex
 
 	fmt.Println("[debug] - iniciando o servidor...")
 	listener, err := net.Listen(tools.SERVER_TYPE, tools.PATH)
@@ -61,11 +62,11 @@ func main() {
 			continue
 		}
 
-		go handleCLient(conn, &mu)
+		go handleCLient(conn, &mu, &p_mu)
 	}
 }
 
-func handleCLient(conn net.Conn, mu *sync.Mutex) {
+func handleCLient(conn net.Conn, mu *sync.Mutex, p_mu *sync.Mutex) {
 	var wg sync.WaitGroup
 	receive_channel := make(chan []byte)
 	send_channel := make(chan []byte)
@@ -84,7 +85,7 @@ LOOP:
 	for {
 		select {
 		case income := <-receive_channel:
-			handleReceive(send_channel, income, &username, mu)
+			handleReceive(send_channel, income, &username, mu, p_mu)
 		case err := <-error_channel:
 			if err == io.EOF {
 				fmt.Println("[error] - client forced to quit")
@@ -94,7 +95,7 @@ LOOP:
 	}
 }
 
-func handleReceive(send_channel chan []byte, income []byte, username *string, mu *sync.Mutex) {
+func handleReceive(send_channel chan []byte, income []byte, username *string, mu *sync.Mutex, p_mu *sync.Mutex) {
 	var request tools.Message
 	err := tools.Deserializejson(income, &request)
 	if err != nil {
@@ -108,8 +109,9 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 	case tools.Login.String():
 		login(request, send_channel, mu, username)
 	case tools.Logout.String():
-    logout(username, send_channel)
+		logout(username, send_channel, mu, p_mu)
 	case tools.Surrender.String():
+		surrender(*username, send_channel, mu, p_mu)
 	case tools.PlaceCard.String():
 	case tools.DrawCard.String():
 	case tools.DiscardCard.String():
@@ -122,23 +124,44 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 	}
 }
 
-
-func surrender() {
-
+func surrender(username string, send_channel chan []byte, mu *sync.Mutex, p_mu *sync.Mutex) {
+	player, ok := ONLINE_PLAYERS[username]
+	if ok {
+		if player.paried {
+			p_mu.Lock()
+			opponent, ok := ONLINE_PLAYERS[player.opponent] // eu sei que ele existe, caso contrário o jogador não estaria pariado
+			if player.data.Coins > 0 {
+				player.data.Coins--
+			}
+			player.paried = false
+			player.opponent = ""
+			sendResponse("lose", player.data, send_channel)
+			if ok {
+				opponent.data.Coins += 2
+				opponent.paried = false
+				opponent.opponent = ""
+				sendResponse("win", opponent.data, opponent.send_channel)
+			}
+		}
+		sendResponse("error", "Not in Game", send_channel)
+		return
+	}
+	sendResponse("error", "Offline User", send_channel)
 }
 
-func logout(username *string, send_channel chan []byte){
-		user, ok := ONLINE_PLAYERS[*username]
-		if !ok {
-			sendResponse("error", "User Already Offline", send_channel)
-			return
-		}
-		if !user.paried {
-			delete(ONLINE_PLAYERS, *username)
-			sendResponse("ok", "Logout Successfully", send_channel)
-			return
-		}
-    
+func logout(username *string, send_channel chan []byte, mu *sync.Mutex, p_mu *sync.Mutex) {
+	user, ok := ONLINE_PLAYERS[*username]
+	if !ok {
+		sendResponse("error", "User Already Offline", send_channel)
+		return
+	}
+	if !user.paried {
+		delete(ONLINE_PLAYERS, *username)
+		sendResponse("ok", "Logout Successfully", send_channel)
+		return
+	}
+	surrender(*username, send_channel, mu, p_mu)
+
 }
 
 func login(request tools.Message, send_channel chan []byte, mu *sync.Mutex, username *string) {
@@ -167,7 +190,7 @@ func login(request tools.Message, send_channel chan []byte, mu *sync.Mutex, user
 		if user.Username == credentials.USER && user.Password == credentials.PSWD {
 			fmt.Println("[debug] - User:", user.Username, "is now logged!")
 			userInfo := UserInfo{paried: false, opponent: "", send_channel: send_channel, data: user}
-			ONLINE_PLAYERS[user.Username] = userInfo
+			ONLINE_PLAYERS[user.Username] = &userInfo
 			sendResponse("ok", "User Logged In", send_channel)
 			*username = credentials.USER
 			return
