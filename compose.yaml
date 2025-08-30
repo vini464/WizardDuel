@@ -1,0 +1,22 @@
+services:
+  server:
+    build:
+      context: "./"
+      dockerfile: "./server/Dockerfile"
+    image: "server:v1"
+    container_name: "server"
+    ports: 
+      - "8080:8080"
+    networks:
+        - internet
+  
+  client:
+    build:
+      context: "./"
+      dockerfile: "./client/Dockerfile"
+    image: "client:v1"
+    networks:
+        - internet
+
+networks:
+    - internet
