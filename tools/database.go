@@ -75,7 +75,7 @@ func DeleteUser(user_info UserCredentials, filename string, mu *sync.Mutex) (boo
 	found := false
 	var id int
 	for index, user := range users {
-		if user.USER == user_info.USER {
+		if user.USER == user_info.USER && user.PSWD == user_info.PSWD {
 			found = true
 			id = index
 		}
