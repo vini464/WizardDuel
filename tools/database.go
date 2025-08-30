@@ -95,6 +95,34 @@ func DeleteUser(user_info UserCredentials, filename string, mu *sync.Mutex) (boo
 	return false, nil
 }
 
+func UpdateUser(credentials UserCredentials, new_data UserData, filename string, mu *sync.Mutex) (bool, error) {
+	users, err := readFile[[]UserData](filename, mu)
+	if err != nil {
+		return false, err
+	}
+	found := false
+	var id int
+	for index, user := range users {
+		if user.Username == credentials.USER && user.Password == credentials.PSWD {
+			found = true
+			id = index
+		}
+	}
+	if found {
+    users[id] = new_data // troca os dados antigos pelos atuais
+		serialized, err := SerializeJson(users)
+		if err != nil {
+			return false, err
+		}
+		_, err = overwriteFile(filename, serialized, mu)
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+	return false, nil
+}
+
 func GetUsers(filename string, mu *sync.Mutex) ([]UserData, error) {
 	return readFile[[]UserData](filename, mu)
 }
