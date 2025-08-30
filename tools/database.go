@@ -3,6 +3,7 @@ package tools
 import (
 	"os"
 	"sync"
+
 )
 
 // Esse módulo é responssável pelo controle de arquivos
@@ -36,18 +37,21 @@ func overwriteFile(filename string, data []byte, mu *sync.Mutex) (int, error) {
 }
 
 // save_user (create)
-func CreateUser(new_user UserCredentials, filename string, mu *sync.Mutex) (bool, string) {
+func CreateUser(credentials UserCredentials, filename string, mu *sync.Mutex) (bool, string) {
 	// lendo o arquivo de usurários
-	users, err := readFile[[]UserCredentials](filename, mu)
+	users, err := readFile[[]UserData](filename, mu)
 	if err != nil {
 		return false, err.Error()
 	}
 
 	for _, user := range users {
-		if user.USER == new_user.USER {
+		if user.Username == credentials.USER {
 			return false, "Username Already Taken"
 		}
 	}
+
+  new_user := UserData{Username: credentials.USER, Password: credentials.PSWD, Coins: 0, SavedDecks: nil}
+
 
 	users = append(users, new_user)
 

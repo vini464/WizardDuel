@@ -72,7 +72,6 @@ type UserData struct {
 	Username   string `json:"username"`
 	Password   string `json:"password"`
 	Coins      int    `json:"coins"`
-	MainDeck   Deck   `json:"mainDeck"`
 	SavedDecks []Deck `json:"savedDecks"`
 }
 
@@ -88,7 +87,7 @@ type Card struct {
 }
 
 type Serializable interface {
-	Message | UserCredentials | Card | Effect | []UserCredentials
+	Message | UserCredentials | Card | Effect | []UserCredentials | UserData | []UserData
 }
 
 func NextPhase(actualPhase TurnPhase) TurnPhase {
