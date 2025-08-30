@@ -39,6 +39,7 @@ type UserInfo struct {
 	paried       bool
 	opponent     string // username do oponente
 	send_channel chan []byte
+  coins        int
 }
 
 var QUEUE = make([]string, 0)
@@ -123,6 +124,9 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 }
 
 
+func surrender() {
+
+}
 
 func logout(username *string, send_channel chan []byte){
 		user, ok := ONLINE_PLAYERS[*username]
@@ -135,6 +139,7 @@ func logout(username *string, send_channel chan []byte){
 			sendResponse("ok", "Logout Successfully", send_channel)
 			return
 		}
+    
 }
 
 func login(request tools.Message, send_channel chan []byte, mu *sync.Mutex, username *string) {
@@ -162,7 +167,7 @@ func login(request tools.Message, send_channel chan []byte, mu *sync.Mutex, user
 	for _, user := range users {
 		if user.USER == data.USER && user.PSWD == data.PSWD {
 			fmt.Println("[debug] - User:", user.USER, "is now logged!")
-			userInfo := UserInfo{user.USER, false, "", send_channel}
+			userInfo := UserInfo{user.USER, false, "", send_channel, 0}
 			ONLINE_PLAYERS[user.USER] = userInfo
 			sendResponse("ok", "User Logged In", send_channel)
 			*username = data.USER

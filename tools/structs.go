@@ -54,13 +54,26 @@ func (cmd Cmd) String() string {
 
 type Message struct {
 	CMD  string `json:"cmd"`
-	DATA any `json:"data.omitempty"`
+	DATA any    `json:"data.omitempty"`
 }
 
 // Algumas estruturas usadas para enviar mensagens
 type UserCredentials struct {
 	USER string `json:"user"`
 	PSWD string `json:"pswd"`
+}
+
+type Deck struct {
+	DeckName string `json:"deckname"`
+	Cards    []Card `json:"cards"`
+}
+
+type UserData struct {
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	Coins      int    `json:"coins"`
+	MainDeck   Deck   `json:"mainDeck"`
+	SavedDecks []Deck `json:"savedDecks"`
 }
 
 type Effect struct {
@@ -98,12 +111,12 @@ func NextPhase(actualPhase TurnPhase) TurnPhase {
 }
 
 func CreateMessage(cmd string, data any) Message {
-  messase := Message{CMD: cmd, DATA: data}
-  return messase
+	messase := Message{CMD: cmd, DATA: data}
+	return messase
 }
 
 func SerializeMessage(cmd string, data any) ([]byte, error) {
-  message := CreateMessage(cmd, data)
-  serialzed, err := SerializeJson(message)
-  return serialzed, err
-} 
+	message := CreateMessage(cmd, data)
+	serialzed, err := SerializeJson(message)
+	return serialzed, err
+}
