@@ -47,6 +47,7 @@ var ONLINE_PLAYERS = make(map[string]*UserInfo)
 func main() {
 	var mu sync.Mutex
 	var p_mu sync.Mutex
+	var q_mu sync.Mutex
 
 	fmt.Println("[debug] - iniciando o servidor...")
 	listener, err := net.Listen(tools.SERVER_TYPE, tools.PATH)
@@ -62,11 +63,11 @@ func main() {
 			continue
 		}
 
-		go handleCLient(conn, &mu, &p_mu)
+		go handleCLient(conn, &mu, &p_mu, &q_mu)
 	}
 }
 
-func handleCLient(conn net.Conn, mu *sync.Mutex, p_mu *sync.Mutex) {
+func handleCLient(conn net.Conn, mu *sync.Mutex, p_mu *sync.Mutex, q_mu *sync.Mutex) {
 	var wg sync.WaitGroup
 	receive_channel := make(chan []byte)
 	send_channel := make(chan []byte)
@@ -85,17 +86,33 @@ LOOP:
 	for {
 		select {
 		case income := <-receive_channel:
-			handleReceive(send_channel, income, &username, mu, p_mu)
+			handleReceive(send_channel, income, &username, mu, p_mu, q_mu)
 		case err := <-error_channel:
 			if err == io.EOF {
 				fmt.Println("[error] - client forced to quit")
+        var index int
+        found := false
+        for id, user := range QUEUE {
+          if (user == username) {
+            found = true
+            index = id
+            break
+          }
+        }
+        if found {
+          QUEUE = append(QUEUE[:index], QUEUE[index+1:]...) // tiro o cara da fila 
+        } else {
+          if ONLINE_PLAYERS[username].paried {
+            surrender(username, send_channel, mu, p_mu)
+          }
+        }
 				break LOOP
 			}
 		}
 	}
 }
 
-func handleReceive(send_channel chan []byte, income []byte, username *string, mu *sync.Mutex, p_mu *sync.Mutex) {
+func handleReceive(send_channel chan []byte, income []byte, username *string, mu *sync.Mutex, p_mu *sync.Mutex, q_mu *sync.Mutex) {
 	var request tools.Message
 	err := tools.Deserializejson(income, &request)
 	if err != nil {
@@ -112,16 +129,37 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 		logout(username, send_channel, mu, p_mu)
 	case tools.Surrender.String():
 		surrender(*username, send_channel, mu, p_mu)
+	case tools.Play.String():
+    play(*username, send_channel, q_mu)
 	case tools.PlaceCard.String():
 	case tools.DrawCard.String():
 	case tools.DiscardCard.String():
 	case tools.SkipPhase.String():
 	case tools.GetBooster.String():
-	case tools.Play.String():
 	case tools.SaveDeck.String():
 	default:
 		fmt.Println("[error] - unknown command")
 	}
+}
+
+func play(username string, send_channel chan []byte, q_mu *sync.Mutex) {
+  q_mu.Lock()
+  defer q_mu.Unlock()
+  var opponent_name string
+  if len(QUEUE) > 0 {
+    opponent_name, QUEUE = tools.Dequeue(QUEUE)
+    opponent := ONLINE_PLAYERS[opponent_name]
+    opponent.paried = true
+    opponent.opponent = username
+    player := ONLINE_PLAYERS[username]
+    player.opponent = opponent_name
+    player.paried = true
+    sendResponse("ok", opponent_name, send_channel)
+    sendResponse("ok", username, opponent.send_channel)
+    
+  } else {
+    QUEUE = tools.Enqueue(QUEUE, username)
+  }
 }
 
 func surrender(username string, send_channel chan []byte, mu *sync.Mutex, p_mu *sync.Mutex) {
