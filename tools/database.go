@@ -3,13 +3,12 @@ package tools
 import (
 	"os"
 	"sync"
-
 )
 
 // Esse módulo é responssável pelo controle de arquivos
 
 func readFile[T Serializable](filename string, mu *sync.Mutex) (T, error) {
-  mu.Lock()
+	mu.Lock()
 	file, err := os.ReadFile(filename)
 	if err != nil {
 		var data T
@@ -24,13 +23,13 @@ func readFile[T Serializable](filename string, mu *sync.Mutex) (T, error) {
 
 // sobreescreve o arquivo indicado com os dados enviados
 func overwriteFile(filename string, data []byte, mu *sync.Mutex) (int, error) {
-  mu.Lock()
+	mu.Lock()
 	file, err := os.Create(filename)
 	if err != nil {
 		mu.Unlock()
 		return 0, err
 	}
-  defer mu.Unlock()
+	defer mu.Unlock()
 	defer file.Close() // só posso fechar depois de confirmar que não teve erros
 	b, err := file.Write(data)
 	return b, err
@@ -50,8 +49,7 @@ func CreateUser(credentials UserCredentials, filename string, mu *sync.Mutex) (b
 		}
 	}
 
-  new_user := UserData{Username: credentials.USER, Password: credentials.PSWD, Coins: 0, SavedDecks: nil}
-
+	new_user := UserData{Username: credentials.USER, Password: credentials.PSWD, Coins: 0, SavedDecks: nil}
 
 	users = append(users, new_user)
 
@@ -68,18 +66,13 @@ func CreateUser(credentials UserCredentials, filename string, mu *sync.Mutex) (b
 }
 
 func DeleteUser(user_info UserCredentials, filename string, mu *sync.Mutex) (bool, error) {
-	users, err := readFile[[]UserCredentials](filename, mu)
+	users, err := readFile[[]UserData](filename, mu)
 	if err != nil {
 		return false, err
 	}
-	found := false
-	var id int
-	for index, user := range users {
-		if user.USER == user_info.USER && user.PSWD == user_info.PSWD {
-			found = true
-			id = index
-		}
-	}
+
+	id, found := findUser(user_info, users)
+
 	if found {
 		users = append(users[:id], users[id+1:]...)
 		serialized, err := SerializeJson(users)
@@ -100,16 +93,11 @@ func UpdateUser(credentials UserCredentials, new_data UserData, filename string,
 	if err != nil {
 		return false, err
 	}
-	found := false
-	var id int
-	for index, user := range users {
-		if user.Username == credentials.USER && user.Password == credentials.PSWD {
-			found = true
-			id = index
-		}
-	}
+
+	id, found := findUser(credentials, users)
+
 	if found {
-    users[id] = new_data // troca os dados antigos pelos atuais
+		users[id] = new_data // troca os dados antigos pelos atuais
 		serialized, err := SerializeJson(users)
 		if err != nil {
 			return false, err
@@ -121,6 +109,15 @@ func UpdateUser(credentials UserCredentials, new_data UserData, filename string,
 		return true, nil
 	}
 	return false, nil
+}
+
+func findUser(credetials UserCredentials, users []UserData) (int, bool) {
+	for index, user := range users {
+		if user.Username == credetials.USER && user.Password == credetials.PSWD {
+			return index, true
+		}
+	}
+	return -1, false
 }
 
 func GetUsers(filename string, mu *sync.Mutex) ([]UserData, error) {
