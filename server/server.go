@@ -144,9 +144,9 @@ func surrender(username string, send_channel chan []byte, mu *sync.Mutex, p_mu *
 				opponent.paried = false
 				opponent.opponent = ""
 				sendResponse("win", opponent.data, opponent.send_channel)
-        credentials := tools.UserCredentials{USER: opponent.data.Username, PSWD: opponent.data.Password}
-        for ok, _ := tools.UpdateUser(credentials, opponent.data, "db/users.json", mu); !ok; {
-        }
+				credentials := tools.UserCredentials{USER: opponent.data.Username, PSWD: opponent.data.Password}
+				for ok, _ := tools.UpdateUser(credentials, opponent.data, "db/users.json", mu); !ok; {
+				}
 			}
 		}
 		sendResponse("error", "Not in Game", send_channel)
@@ -167,7 +167,8 @@ func logout(username *string, send_channel chan []byte, mu *sync.Mutex, p_mu *sy
 		return
 	}
 	surrender(*username, send_channel, mu, p_mu)
-
+	delete(ONLINE_PLAYERS, *username)
+	sendResponse("ok", "Logout Successfully", send_channel)
 }
 
 func login(request tools.Message, send_channel chan []byte, mu *sync.Mutex, username *string) {

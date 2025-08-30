@@ -120,6 +120,8 @@ func findUser(credetials UserCredentials, users []UserData) (int, bool) {
 	return -1, false
 }
 
-func GetUsers(filename string) ([]UserData, error) {
+func GetUsers(filename string, mu *sync.Mutex) ([]UserData, error) {
+  mu.Lock()
+  defer mu.Unlock()
 	return readFile[[]UserData](filename)
 }
