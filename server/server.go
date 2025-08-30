@@ -35,11 +35,10 @@ type CardSet struct {
 }
 
 type UserInfo struct {
-	username     string
 	paried       bool
 	opponent     string // username do oponente
 	send_channel chan []byte
-  coins        int
+  data  tools.UserData
 }
 
 var QUEUE = make([]string, 0)
@@ -143,18 +142,18 @@ func logout(username *string, send_channel chan []byte){
 }
 
 func login(request tools.Message, send_channel chan []byte, mu *sync.Mutex, username *string) {
-	data, ok := request.DATA.(tools.UserCredentials)
+	credentials, ok := request.DATA.(tools.UserCredentials)
 	if !ok {
 		sendResponse("error", "Bad Request", send_channel)
 		return
 	}
-	hash, err := hashPassword(data.PSWD)
+	hash, err := hashPassword(credentials.PSWD)
 	if err != nil {
 		sendResponse("error", "Internal Error", send_channel)
 		return
 	}
-	data.PSWD = hash // passando a senha por um hash para melhor segurança
-	_, ok = ONLINE_PLAYERS[data.USER]
+	credentials.PSWD = hash // passando a senha por um hash para melhor segurança
+	_, ok = ONLINE_PLAYERS[credentials.USER]
 	if ok {
 		sendResponse("error", "User Already Logged", send_channel)
 		return
@@ -165,12 +164,12 @@ func login(request tools.Message, send_channel chan []byte, mu *sync.Mutex, user
 		return
 	}
 	for _, user := range users {
-		if user.USER == data.USER && user.PSWD == data.PSWD {
-			fmt.Println("[debug] - User:", user.USER, "is now logged!")
-			userInfo := UserInfo{user.USER, false, "", send_channel, 0}
-			ONLINE_PLAYERS[user.USER] = userInfo
+		if user.Username == credentials.USER && user.Password == credentials.PSWD {
+			fmt.Println("[debug] - User:", user.Username, "is now logged!")
+			userInfo := UserInfo{paried: false, opponent: "", send_channel: send_channel, data: user}
+			ONLINE_PLAYERS[user.Username] = userInfo
 			sendResponse("ok", "User Logged In", send_channel)
-			*username = data.USER
+			*username = credentials.USER
 			return
 		}
 	}

@@ -95,6 +95,6 @@ func DeleteUser(user_info UserCredentials, filename string, mu *sync.Mutex) (boo
 	return false, nil
 }
 
-func GetUsers(filename string, mu *sync.Mutex) ([]UserCredentials, error) {
-	return readFile[[]UserCredentials](filename, mu)
+func GetUsers(filename string, mu *sync.Mutex) ([]UserData, error) {
+	return readFile[[]UserData](filename, mu)
 }
