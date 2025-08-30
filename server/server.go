@@ -46,7 +46,7 @@ var ONLINE_PLAYERS = make(map[string]*UserInfo)
 
 func main() {
 	var mu sync.Mutex
-  var p_mu sync.Mutex
+	var p_mu sync.Mutex
 
 	fmt.Println("[debug] - iniciando o servidor...")
 	listener, err := net.Listen(tools.SERVER_TYPE, tools.PATH)
@@ -136,11 +136,17 @@ func surrender(username string, send_channel chan []byte, mu *sync.Mutex, p_mu *
 			player.paried = false
 			player.opponent = ""
 			sendResponse("lose", player.data, send_channel)
+			credentials := tools.UserCredentials{USER: player.data.Username, PSWD: player.data.Password}
+			for ok, _ := tools.UpdateUser(credentials, player.data, "db/users.json", mu); !ok; {
+			}
 			if ok {
 				opponent.data.Coins += 2
 				opponent.paried = false
 				opponent.opponent = ""
 				sendResponse("win", opponent.data, opponent.send_channel)
+        credentials := tools.UserCredentials{USER: opponent.data.Username, PSWD: opponent.data.Password}
+        for ok, _ := tools.UpdateUser(credentials, opponent.data, "db/users.json", mu); !ok; {
+        }
 			}
 		}
 		sendResponse("error", "Not in Game", send_channel)
