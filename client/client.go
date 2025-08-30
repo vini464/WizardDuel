@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"os"
@@ -36,7 +38,7 @@ func handleConnection(conn net.Conn) {
 		}
 		var credentials tools.UserCredentials
 		credentials.USER = tools.Input("Digite seu username:\n> ")
-		credentials.PSWD = tools.Input("Digite sua senha:\n> ")
+		credentials.PSWD = hashPassword(tools.Input("Digite sua senha:\n> "))
 		var cmd string
 		if c == "1" {
 			cmd = tools.Login.String()
@@ -134,4 +136,11 @@ func sendRequest(cmd string, data any, send_channel chan []byte) {
 	for response, err = tools.SerializeMessage(cmd, data); err != nil; {
 	}
 	send_channel <- response
+}
+
+func hashPassword(pswd string) string {
+	hasher := md5.New()
+  hasher.Write([]byte(pswd))
+  hash := hex.EncodeToString(hasher.Sum([]byte("testando hash")))
+	return hash
 }

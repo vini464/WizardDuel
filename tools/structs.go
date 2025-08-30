@@ -1,5 +1,6 @@
 package tools
 
+
 type TurnPhase int
 type Cmd int
 
@@ -87,7 +88,7 @@ type Card struct {
 }
 
 type Serializable interface {
-	Message | UserCredentials | Card | Effect | []UserCredentials | UserData | []UserData
+	Message | UserCredentials | Card | Effect | []UserCredentials | UserData | []UserData | map[string]string | map[string]interface{}
 }
 
 func NextPhase(actualPhase TurnPhase) TurnPhase {

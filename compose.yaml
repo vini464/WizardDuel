@@ -11,12 +11,18 @@ services:
         - internet
   
   client:
+    depends_on: 
+      - server
     build:
       context: "./"
       dockerfile: "./client/Dockerfile"
     image: "client:v1"
+    tty: true
+    stdin_open: true
     networks:
         - internet
 
 networks:
-    - internet
+  internet:
+    driver: bridge
+    name: "internet"

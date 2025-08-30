@@ -7,7 +7,10 @@ import (
 	"sync"
 
 	"github.com/vini464/WizardDuel/tools"
-	"golang.org/x/crypto/bcrypt"
+)
+
+const (
+	USERDB = "users.json"
 )
 
 type PlayerData struct {
@@ -90,22 +93,22 @@ LOOP:
 		case err := <-error_channel:
 			if err == io.EOF {
 				fmt.Println("[error] - client forced to quit")
-        var index int
-        found := false
-        for id, user := range QUEUE {
-          if (user == username) {
-            found = true
-            index = id
-            break
-          }
-        }
-        if found {
-          QUEUE = append(QUEUE[:index], QUEUE[index+1:]...) // tiro o cara da fila 
-        } else {
-          if ONLINE_PLAYERS[username].paried {
-            surrender(username, send_channel, mu, p_mu)
-          }
-        }
+				var index int
+				found := false
+				for id, user := range QUEUE {
+					if user == username {
+						found = true
+						index = id
+						break
+					}
+				}
+				if found {
+					QUEUE = append(QUEUE[:index], QUEUE[index+1:]...) // tiro o cara da fila
+				} else {
+					if ONLINE_PLAYERS[username].paried {
+						surrender(username, send_channel, mu, p_mu)
+					}
+				}
 				break LOOP
 			}
 		}
@@ -114,23 +117,44 @@ LOOP:
 
 func handleReceive(send_channel chan []byte, income []byte, username *string, mu *sync.Mutex, p_mu *sync.Mutex, q_mu *sync.Mutex) {
 	var request tools.Message
+	var data_bytes []byte
 	err := tools.Deserializejson(income, &request)
+	data, ok := request.DATA.(map[string]interface{})
+	fmt.Printf("data type: %T\n", request.DATA)
+	if ok {
+		data_bytes, err = tools.SerializeJson(data)
+		fmt.Println("data bytes:", string(data_bytes))
+	}
 	if err != nil {
-		fmt.Println("[error] - error while deserializing:", err)
+		fmt.Println("1[error] - error while deserializing:", err)
 		sendResponse("error", "Internal Error", send_channel)
 		return
 	}
 	switch request.CMD {
 	case tools.Register.String():
-		register(request, send_channel, mu)
+		var data tools.UserCredentials
+		err := tools.Deserializejson(data_bytes, &data)
+		if err != nil {
+			fmt.Println("2[error] error while deserializing", err)
+			sendResponse("error", "Internal Error", send_channel)
+			return
+		}
+		register(data, send_channel, mu)
 	case tools.Login.String():
-		login(request, send_channel, mu, username)
+		var data tools.UserCredentials
+		err := tools.Deserializejson(data_bytes, &data)
+		if err != nil {
+			fmt.Println("3[error] error while deserializing")
+			sendResponse("error", "Internal Error", send_channel)
+			return
+		}
+		login(data, send_channel, mu, username)
 	case tools.Logout.String():
 		logout(username, send_channel, mu, p_mu)
 	case tools.Surrender.String():
 		surrender(*username, send_channel, mu, p_mu)
 	case tools.Play.String():
-    play(*username, send_channel, q_mu)
+		play(*username, send_channel, q_mu)
 	case tools.PlaceCard.String():
 	case tools.DrawCard.String():
 	case tools.DiscardCard.String():
@@ -143,23 +167,23 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 }
 
 func play(username string, send_channel chan []byte, q_mu *sync.Mutex) {
-  q_mu.Lock()
-  defer q_mu.Unlock()
-  var opponent_name string
-  if len(QUEUE) > 0 {
-    opponent_name, QUEUE = tools.Dequeue(QUEUE)
-    opponent := ONLINE_PLAYERS[opponent_name]
-    opponent.paried = true
-    opponent.opponent = username
-    player := ONLINE_PLAYERS[username]
-    player.opponent = opponent_name
-    player.paried = true
-    sendResponse("ok", opponent_name, send_channel)
-    sendResponse("ok", username, opponent.send_channel)
-    
-  } else {
-    QUEUE = tools.Enqueue(QUEUE, username)
-  }
+	q_mu.Lock()
+	defer q_mu.Unlock()
+	var opponent_name string
+	if len(QUEUE) > 0 {
+		opponent_name, QUEUE = tools.Dequeue(QUEUE)
+		opponent := ONLINE_PLAYERS[opponent_name]
+		opponent.paried = true
+		opponent.opponent = username
+		player := ONLINE_PLAYERS[username]
+		player.opponent = opponent_name
+		player.paried = true
+		sendResponse("ok", opponent_name, send_channel)
+		sendResponse("ok", username, opponent.send_channel)
+
+	} else {
+		QUEUE = tools.Enqueue(QUEUE, username)
+	}
 }
 
 func surrender(username string, send_channel chan []byte, mu *sync.Mutex, p_mu *sync.Mutex) {
@@ -175,7 +199,7 @@ func surrender(username string, send_channel chan []byte, mu *sync.Mutex, p_mu *
 			player.opponent = ""
 			sendResponse("lose", player.data, send_channel)
 			credentials := tools.UserCredentials{USER: player.data.Username, PSWD: player.data.Password}
-			for ok, _ := tools.UpdateUser(credentials, player.data, "db/users.json", mu); !ok; {
+			for ok, _ := tools.UpdateUser(credentials, player.data, USERDB, mu); !ok; {
 			}
 			if ok {
 				opponent.data.Coins += 2
@@ -183,7 +207,7 @@ func surrender(username string, send_channel chan []byte, mu *sync.Mutex, p_mu *
 				opponent.opponent = ""
 				sendResponse("win", opponent.data, opponent.send_channel)
 				credentials := tools.UserCredentials{USER: opponent.data.Username, PSWD: opponent.data.Password}
-				for ok, _ := tools.UpdateUser(credentials, opponent.data, "db/users.json", mu); !ok; {
+				for ok, _ := tools.UpdateUser(credentials, opponent.data, USERDB, mu); !ok; {
 				}
 			}
 		}
@@ -209,29 +233,19 @@ func logout(username *string, send_channel chan []byte, mu *sync.Mutex, p_mu *sy
 	sendResponse("ok", "Logout Successfully", send_channel)
 }
 
-func login(request tools.Message, send_channel chan []byte, mu *sync.Mutex, username *string) {
-	credentials, ok := request.DATA.(tools.UserCredentials)
-	if !ok {
-		sendResponse("error", "Bad Request", send_channel)
-		return
-	}
-	hash, err := hashPassword(credentials.PSWD)
-	if err != nil {
-		sendResponse("error", "Internal Error", send_channel)
-		return
-	}
-	credentials.PSWD = hash // passando a senha por um hash para melhor segurança
-	_, ok = ONLINE_PLAYERS[credentials.USER]
+func login(credentials tools.UserCredentials, send_channel chan []byte, mu *sync.Mutex, username *string) {
+  _, ok := ONLINE_PLAYERS[credentials.USER]
 	if ok {
 		sendResponse("error", "User Already Logged", send_channel)
 		return
 	}
-	users, err := tools.GetUsers("bd/users.json", mu)
+	users, err := tools.GetUsers(USERDB, mu)
 	if err != nil {
 		sendResponse("error", "Unable to Find User", send_channel)
 		return
 	}
 	for _, user := range users {
+
 		if user.Username == credentials.USER && user.Password == credentials.PSWD {
 			fmt.Println("[debug] - User:", user.Username, "is now logged!")
 			userInfo := UserInfo{paried: false, opponent: "", send_channel: send_channel, data: user}
@@ -240,23 +254,14 @@ func login(request tools.Message, send_channel chan []byte, mu *sync.Mutex, user
 			*username = credentials.USER
 			return
 		}
+
 	}
 	sendResponse("error", "Wrong User Or Password", send_channel)
 }
 
-func register(request tools.Message, send_channel chan []byte, mu *sync.Mutex) {
-	data, ok := request.DATA.(tools.UserCredentials)
-	if !ok {
-		sendResponse("error", "Bad Request", send_channel)
-		return
-	}
-	hash, err := hashPassword(data.PSWD)
-	if err != nil {
-		sendResponse("error", "Internal Error", send_channel)
-		return
-	}
-	data.PSWD = hash // passando a senha por um hash para melhor segurança
-	ok, desc := tools.CreateUser(data, "bd/users.json", mu)
+func register(credentials tools.UserCredentials, send_channel chan []byte, mu *sync.Mutex) {
+	fmt.Println("[debug] - message type:", credentials)
+	ok, desc := tools.CreateUser(credentials, USERDB, mu)
 	if ok {
 		sendResponse("ok", desc, send_channel)
 		return
@@ -273,7 +278,3 @@ func sendResponse(cmd string, data any, send_channel chan []byte) {
 	send_channel <- response
 }
 
-func hashPassword(pswd string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(pswd), bcrypt.DefaultCost)
-	return string(bytes), err
-}

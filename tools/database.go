@@ -36,7 +36,9 @@ func CreateUser(credentials UserCredentials, filename string, mu *sync.Mutex) (b
 	// lendo o arquivo de usurários
 	users, err := readFile[[]UserData](filename)
 	if err != nil {
-		return false, err.Error()
+		//return false, err.Error()
+    users = make([]UserData, 0) 
+
 	}
 
 	for _, user := range users {
