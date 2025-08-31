@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"sync"
 
 	"github.com/vini464/WizardDuel/tools"
@@ -158,6 +159,8 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 	case tools.Play.String():
 		play(*username, send_channel, q_mu)
 	case tools.PlaceCard.String():
+    data := getData[string](request.DATA)
+    placeCard(*username, data, send_channel, p_mu)
 	case tools.DrawCard.String():
 	case tools.DiscardCard.String():
 	case tools.SkipPhase.String():
@@ -200,7 +203,6 @@ func placeCard(username string, cardname string, send_channel chan []byte, p_mu 
       fmt.Println("Unknown effect")
 			}
 		}
-
 	}
 }
 
@@ -314,4 +316,23 @@ func sendResponse(cmd string, data any, send_channel chan []byte) {
 	for response, err = tools.SerializeMessage(cmd, data); err != nil; {
 	}
 	send_channel <- response
+}
+func getData[T tools.Serializable](data any) T {
+	mapped, ok := data.(map[string]interface{})
+	if !ok {
+		fmt.Println("[error] - an error occourred...")
+		os.Exit(1)
+	}
+	ser_map, err := tools.SerializeJson(mapped)
+	if err != nil {
+		fmt.Println("[error] - an error occourred...", err)
+		os.Exit(1)
+	}
+	var structure T
+	err = tools.Deserializejson(ser_map, &structure)
+	if err != nil {
+		fmt.Println("[error] - an error occourred...", err)
+		os.Exit(1)
+	}
+	return structure
 }

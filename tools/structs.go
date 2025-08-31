@@ -109,7 +109,7 @@ type GameState struct {
 }
 
 type Serializable interface {
-	GameState | Message | UserCredentials | Card | Effect | []UserCredentials | UserData | []UserData | map[string]string | map[string]interface{}
+	string | GameState | Message | UserCredentials | Card | Effect | []UserCredentials | UserData | []UserData | map[string]string | map[string]interface{}
 }
 
 func NextPhase(actualPhase TurnPhase) TurnPhase {
