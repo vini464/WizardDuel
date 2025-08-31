@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"os"
 	"sync"
 
 	"github.com/vini464/WizardDuel/tools"
@@ -122,12 +121,7 @@ LOOP:
 
 func handleReceive(send_channel chan []byte, income []byte, username *string, mu *sync.Mutex, p_mu *sync.Mutex, q_mu *sync.Mutex) {
 	var request tools.Message
-	var data_bytes []byte
 	err := tools.Deserializejson(income, &request)
-	data, ok := request.DATA.(map[string]interface{})
-	if ok {
-		data_bytes, err = tools.SerializeJson(data)
-	}
 	if err != nil {
 		fmt.Println("[error] - error while deserializing:", err)
 		sendResponse("error", "Internal Error", send_channel)
@@ -135,23 +129,19 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 	}
 	switch request.CMD {
 	case tools.Register.String():
-		var data tools.UserCredentials
-		err := tools.Deserializejson(data_bytes, &data)
-		if err != nil {
-			fmt.Println("[error] - error while deserializing", err)
-			sendResponse("error", "Internal Error", send_channel)
-			return
-		}
+		data, ok := getData[tools.UserCredentials](request.DATA)
+    if ok {
 		register(data, send_channel, mu)
+    } else {
+			sendResponse("error", "bad request", send_channel)
+    }
 	case tools.Login.String():
-		var data tools.UserCredentials
-		err := tools.Deserializejson(data_bytes, &data)
-		if err != nil {
-			fmt.Println("[error] - error while deserializing")
-			sendResponse("error", "Internal Error", send_channel)
-			return
-		}
-		login(data, send_channel, mu, username)
+		data, ok := getData[tools.UserCredentials](request.DATA)
+    if ok {
+      login(data, send_channel, mu, p_mu, username)
+    } else {
+			sendResponse("error", "bad request", send_channel)
+    }
 	case tools.Logout.String():
 		logout(username, send_channel, mu, p_mu)
 	case tools.Surrender.String():
@@ -159,8 +149,12 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 	case tools.Play.String():
 		play(*username, send_channel, q_mu)
 	case tools.PlaceCard.String():
-    data := getData[string](request.DATA)
-    placeCard(*username, data, send_channel, p_mu)
+		data, ok := getData[string](request.DATA)
+		if ok {
+			placeCard(*username, data, send_channel, p_mu)
+		} else{
+			sendResponse("error", "bad request", send_channel)
+    }
 	case tools.DrawCard.String():
 	case tools.DiscardCard.String():
 	case tools.SkipPhase.String():
@@ -195,12 +189,12 @@ func placeCard(username string, cardname string, send_channel chan []byte, p_mu 
 			switch effect.TYPE {
 			case "damage":
 				fmt.Println("You dealt", effect.AMOUNT, "damage")
-        ONLINE_PLAYERS[username].gamestate.Opponent.HP -= effect.AMOUNT
+				ONLINE_PLAYERS[username].gamestate.Opponent.HP -= effect.AMOUNT
 			case "heal":
 				fmt.Println("You heal", effect.AMOUNT, "damage")
-        ONLINE_PLAYERS[username].gamestate.You.HP += effect.AMOUNT
-      default:
-      fmt.Println("Unknown effect")
+				ONLINE_PLAYERS[username].gamestate.You.HP += effect.AMOUNT
+			default:
+				fmt.Println("Unknown effect")
 			}
 		}
 	}
@@ -273,7 +267,9 @@ func logout(username *string, send_channel chan []byte, mu *sync.Mutex, p_mu *sy
 	sendResponse("ok", "Logout Successfully", send_channel)
 }
 
-func login(credentials tools.UserCredentials, send_channel chan []byte, mu *sync.Mutex, username *string) {
+func login(credentials tools.UserCredentials, send_channel chan []byte, mu *sync.Mutex, p_mu *sync.Mutex, username *string) {
+  p_mu.Lock()
+  defer p_mu.Unlock()
 	_, ok := ONLINE_PLAYERS[credentials.USER]
 	if ok {
 		sendResponse("error", "User Already Logged", send_channel)
@@ -317,22 +313,22 @@ func sendResponse(cmd string, data any, send_channel chan []byte) {
 	}
 	send_channel <- response
 }
-func getData[T tools.Serializable](data any) T {
+func getData[T tools.Serializable](data any) (T, bool) {
+	var structure T
 	mapped, ok := data.(map[string]interface{})
 	if !ok {
 		fmt.Println("[error] - an error occourred...")
-		os.Exit(1)
+		return structure, false
 	}
 	ser_map, err := tools.SerializeJson(mapped)
 	if err != nil {
 		fmt.Println("[error] - an error occourred...", err)
-		os.Exit(1)
+		return structure, false
 	}
-	var structure T
 	err = tools.Deserializejson(ser_map, &structure)
 	if err != nil {
 		fmt.Println("[error] - an error occourred...", err)
-		os.Exit(1)
+		return structure, false
 	}
-	return structure
+	return structure, true
 }
