@@ -60,7 +60,7 @@ func handleConnection(conn net.Conn) {
 		switch response.CMD {
 		case "ok":
 			if c == "1" {
-				fmt.Println("Your Are Logged!")
+				//fmt.Println("Your Are Logged!")
 				online(credentials, send_channel, receive_channel, error_channel)
 			} else {
 				fmt.Println("User registered successfully")
@@ -94,7 +94,7 @@ func initialPage() string {
 
 func online(credentials tools.UserCredentials, send_channel chan []byte, receive_channel chan []byte, error_channel chan error) {
 	var choice = ""
-	for choice != "1" && choice != "2" {
+	for choice != "1" && choice != "0" {
 		fmt.Println("You are logged!")
 		fmt.Println("1 - Find match")
 		fmt.Println("0 - Exit")

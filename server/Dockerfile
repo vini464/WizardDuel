@@ -5,8 +5,8 @@ COPY --exclude=client/ . .
 RUN go mod tidy
 RUN CGO_ENABLED=0 GOOS=linux go build -o server server/server.go
 
-FROM alpine
+FROM scratch
 WORKDIR /app
 COPY --from=builder /app/server .
-ADD bd .
+ADD persistence .
 CMD ["./server"]

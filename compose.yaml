@@ -9,6 +9,8 @@ services:
       - "8080:8080"
     networks:
         - internet
+    volumes:
+        - "./database:/app/persistence/user.json"
   
   client:
     depends_on: 
@@ -26,3 +28,4 @@ networks:
   internet:
     driver: bridge
     name: "internet"
+

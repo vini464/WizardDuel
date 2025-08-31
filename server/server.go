@@ -109,6 +109,7 @@ LOOP:
 						surrender(username, send_channel, mu, p_mu)
 					}
 				}
+        delete(ONLINE_PLAYERS, username)
 				break LOOP
 			}
 		}
@@ -120,13 +121,11 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 	var data_bytes []byte
 	err := tools.Deserializejson(income, &request)
 	data, ok := request.DATA.(map[string]interface{})
-	fmt.Printf("data type: %T\n", request.DATA)
 	if ok {
 		data_bytes, err = tools.SerializeJson(data)
-		fmt.Println("data bytes:", string(data_bytes))
 	}
 	if err != nil {
-		fmt.Println("1[error] - error while deserializing:", err)
+		fmt.Println("[error] - error while deserializing:", err)
 		sendResponse("error", "Internal Error", send_channel)
 		return
 	}
@@ -135,7 +134,7 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 		var data tools.UserCredentials
 		err := tools.Deserializejson(data_bytes, &data)
 		if err != nil {
-			fmt.Println("2[error] error while deserializing", err)
+			fmt.Println("[error] - error while deserializing", err)
 			sendResponse("error", "Internal Error", send_channel)
 			return
 		}
@@ -144,7 +143,7 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 		var data tools.UserCredentials
 		err := tools.Deserializejson(data_bytes, &data)
 		if err != nil {
-			fmt.Println("3[error] error while deserializing")
+			fmt.Println("[error] - error while deserializing")
 			sendResponse("error", "Internal Error", send_channel)
 			return
 		}
@@ -234,7 +233,7 @@ func logout(username *string, send_channel chan []byte, mu *sync.Mutex, p_mu *sy
 }
 
 func login(credentials tools.UserCredentials, send_channel chan []byte, mu *sync.Mutex, username *string) {
-  _, ok := ONLINE_PLAYERS[credentials.USER]
+	_, ok := ONLINE_PLAYERS[credentials.USER]
 	if ok {
 		sendResponse("error", "User Already Logged", send_channel)
 		return
@@ -277,4 +276,3 @@ func sendResponse(cmd string, data any, send_channel chan []byte) {
 	}
 	send_channel <- response
 }
-
