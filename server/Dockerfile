@@ -8,5 +8,5 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o server server/server.go
 FROM scratch
 WORKDIR /app
 COPY --from=builder /app/server .
-ADD persistence .
+COPY database .
 CMD ["./server"]

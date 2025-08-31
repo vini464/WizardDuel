@@ -10,7 +10,7 @@ services:
     networks:
         - internet
     volumes:
-        - "./database:/app/persistence/user.json"
+        - ./database:/app/database:rw
   
   client:
     depends_on: 

@@ -98,49 +98,54 @@ func online(credentials tools.UserCredentials, send_channel chan []byte, receive
 		fmt.Println("You are logged!")
 		fmt.Println("1 - Find match")
 		fmt.Println("0 - Exit")
-    choice = tools.Input("> ")
-    exec.Command("clear")
+		choice = tools.Input("> ")
+		exec.Command("clear")
 	}
-  if choice == "0"{
-    os.Exit(0)
-  }
-  sendRequest(tools.Play.String(), credentials, send_channel)
-  for {
-    select {
-    case serialized := <-receive_channel:
-      var receive tools.Message
-      err := tools.Deserializejson(serialized, &receive)
-      if (err != nil) {
-        fmt.Println("[error] an error occourred", err)
-        continue
-      }
-      switch receive.CMD {
-      case "ok":
-        fmt.Println("You are playing with: ", receive.DATA)
-      case "error":
-        fmt.Println("Unable to Play:", receive.DATA)
-      default:
-        fmt.Println("[error] unknown command:", receive.CMD)
-      }
-    case err := <-error_channel:
-      fmt.Println("[error] an error occourred", err)
-    }
-  }
+	if choice == "0" {
+		os.Exit(0)
+	}
+	// iniciando uma partida
+	sendRequest(tools.Play.String(), credentials, send_channel)
+QUEUE_LOOP:
+	for {
+		select {
+		case serialized := <-receive_channel:
+			var receive tools.Message
+			err := tools.Deserializejson(serialized, &receive)
+			if err != nil {
+				fmt.Println("[error] an error occourred", err)
+				os.Exit(1)
+			}
+			switch receive.CMD {
+			case "ok":
+				fmt.Println("You are playing with: ", receive.DATA) // receive.Data vai ser o GameState
+				break QUEUE_LOOP                                    // só sai do loop quando encontrar uma partida
+			case "error":
+				fmt.Println("Unable to Play:", receive.DATA)
+				os.Exit(1)
+			case "queued":
+				fmt.Println("Waiting for an opponent...")
+			default:
+				fmt.Println("[error] unknown command:", receive.CMD)
+			}
+		case err := <-error_channel:
+			fmt.Println("[error] an error occourred", err)
+		}
+	}
 
 }
 
 func sendRequest(cmd string, data any, send_channel chan []byte) {
-	fmt.Println("[error] -", data)
-	var response []byte
-	var err error
-	for response, err = tools.SerializeMessage(cmd, data); err != nil; {
+	response, err := tools.SerializeMessage(cmd, data)
+	if err != nil {
+		os.Exit(1)
 	}
 	send_channel <- response
 }
 
 func hashPassword(pswd string) string {
 	hasher := md5.New()
-  hasher.Write([]byte(pswd))
-  hash := hex.EncodeToString(hasher.Sum([]byte("testando hash")))
+	hasher.Write([]byte(pswd))
+	hash := hex.EncodeToString(hasher.Sum([]byte("testando hash")))
 	return hash
 }

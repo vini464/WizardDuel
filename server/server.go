@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	USERDB = "users.json"
+	USERDB = "database/users.json"
 )
 
 type PlayerData struct {
