@@ -198,7 +198,7 @@ func placeCard(username string, cardname string, send_channel chan []byte, p_mu 
 				fmt.Println("You dealt", effect.AMOUNT, "damage")
 				ONLINE_PLAYERS[username].gamestate.Opponent.HP -= effect.AMOUNT
 			case "heal":
-				fmt.Println("You heal", effect.AMOUNT, "damage")
+				fmt.Println("You heal", effect.AMOUNT, "HP")
 				ONLINE_PLAYERS[username].gamestate.You.HP += effect.AMOUNT
 			default:
 				fmt.Println("Unknown effect")
@@ -210,10 +210,8 @@ func placeCard(username string, cardname string, send_channel chan []byte, p_mu 
 }
 
 func play(username string, send_channel chan []byte, q_mu *sync.Mutex, p_mu *sync.Mutex) {
-  fmt.Println("[debug] - before unlock")
 	q_mu.Lock()
 	p_mu.Lock()
-  fmt.Println("[debug] - after unlock")
 	defer q_mu.Unlock()
 	defer p_mu.Unlock()
   
@@ -225,27 +223,17 @@ func play(username string, send_channel chan []byte, q_mu *sync.Mutex, p_mu *syn
 
 	var opponent_name string
 	if len(QUEUE) > 0 {
-    fmt.Println("[debug] - inside queue")
 		opponent_name, QUEUE = tools.Dequeue(QUEUE)
-    fmt.Println("[debug] - dequeued opponent:", opponent_name)
 		gamestate := &ONLINE_PLAYERS[username].gamestate
-    fmt.Println("[debug] - get user gamestate:")
 		op_gamestate := &ONLINE_PLAYERS[opponent_name].gamestate
 
-    fmt.Println("[debug] - set player gamstate")
     // sempre o jogador que estava esperando começa o jogo
 		setGameState(gamestate, username, opponent_name)
 		setGameState(op_gamestate, opponent_name, opponent_name)
 
-    fmt.Println("[debug] - set op gamestate")
 		setOpponentState(gamestate, op_gamestate, opponent_name)
 		setOpponentState(op_gamestate, gamestate, username)
 
-    fmt.Println("gamestate: ", gamestate)
-    fmt.Println("op_gamestate: ", op_gamestate)
-
-
-    fmt.Println("[debug] - sending response")
 		sendResponse("ok", *gamestate, send_channel)
 		sendResponse("ok", *op_gamestate, ONLINE_PLAYERS[opponent_name].send_channel)
 
@@ -267,25 +255,15 @@ func setOpponentState(gamestate *tools.GameState, op_gamestate *tools.GameState,
 }
 
 func setGameState(gamestate *tools.GameState, username string, turn string) {
-  fmt.Println("[debug] - 1")
 	gamestate.You.Crystals = 0
-  fmt.Println("[debug] - 2")
 	gamestate.You.HP = 10
-  fmt.Println("[debug] - 3")
 	gamestate.You.SP = 10
-  fmt.Println("[debug] - 4")
 	gamestate.You.Energy = 0
-  fmt.Println("[debug] - 5")
 	gamestate.You.Graveyard = make([]tools.Card, 0)
-  fmt.Println("[debug] - 6")
 	gamestate.You.Hand = append(gamestate.You.Hand, ONLINE_PLAYERS[username].main_deck.Cards[:5]...)
-  fmt.Println("[debug] - 7")
 	gamestate.You.Deck = len(ONLINE_PLAYERS[username].main_deck.Cards)
-  fmt.Println("[debug] - 8")
 	gamestate.Turn = turn
-  fmt.Println("[debug] - 9")
 	gamestate.Phase = tools.Refill.String()
-  fmt.Println("[debug] - 10")
 }
 
 func surrender(username string, send_channel chan []byte, mu *sync.Mutex, p_mu *sync.Mutex) {
