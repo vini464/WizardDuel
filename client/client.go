@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"strconv"
 	"sync"
 
 	"github.com/vini464/WizardDuel/tools"
@@ -106,6 +107,7 @@ func online(credentials tools.UserCredentials, send_channel chan []byte, receive
 	}
 	// iniciando uma partida
 	sendRequest(tools.Play.String(), credentials, send_channel)
+	var receivedData any
 QUEUE_LOOP:
 	for {
 		select {
@@ -119,7 +121,8 @@ QUEUE_LOOP:
 			switch receive.CMD {
 			case "ok":
 				fmt.Println("You are playing with: ", receive.DATA) // receive.Data vai ser o GameState
-				break QUEUE_LOOP                                    // só sai do loop quando encontrar uma partida
+				receivedData = receive.DATA
+				break QUEUE_LOOP // só sai do loop quando encontrar uma partida
 			case "error":
 				fmt.Println("Unable to Play:", receive.DATA)
 				os.Exit(1)
@@ -132,7 +135,87 @@ QUEUE_LOOP:
 			fmt.Println("[error] an error occourred", err)
 		}
 	}
+	// em uma partida
 
+	for {
+		exec.Command("clear")
+		gamestate := getData[tools.GameState](receivedData)
+		fmt.Println("TURN:", gamestate.Turn)
+		fmt.Println("PHASE:", gamestate.Phase)
+
+		fmt.Println("Opponent info:")
+		fmt.Println("name:", gamestate.Opponent.Username)
+		fmt.Println("hand:", gamestate.Opponent.Hand)
+		fmt.Println("deck:", gamestate.Opponent.Deck)
+		fmt.Println("graveyard:", gamestate.Opponent.Graveyard)
+		fmt.Println("HP:", gamestate.Opponent.HP, "SP:", gamestate.Opponent.SP, "Energy:", gamestate.Opponent.Energy, "Crystals:", gamestate.Opponent.Crystals)
+
+		fmt.Println("Your info:")
+		fmt.Println("hand:", gamestate.You.Hand)
+		fmt.Println("deck:", gamestate.You.Deck)
+		fmt.Println("graveyard:", gamestate.You.Graveyard)
+		fmt.Println("HP:", gamestate.You.HP, "SP:", gamestate.You.SP, "Energy:", gamestate.You.Energy, "Crystals:", gamestate.You.Crystals)
+
+		if gamestate.Turn == credentials.USER {
+			switch gamestate.Phase {
+			case tools.Refill.String():
+				tools.Input("You want to do something?\n> ")
+				sendRequest(tools.SkipPhase.String(), "", send_channel)
+			case tools.Draw.String():
+				tools.Input("You want to do something?\n> ")
+				sendRequest(tools.SkipPhase.String(), "", send_channel)
+			case tools.Main.String():
+          mainPhase(gamestate.You.Hand, send_channel)
+			case tools.Maintenance.String():
+			case tools.End.String():
+			default:
+			}
+		}
+	}
+}
+
+func mainPhase(hand []tools.Card, send_channel chan []byte) {
+	for {
+		for id, card := range hand {
+			fmt.Println(id, "-", card.NAME, "{ cost:", card.COST, "efects:", card.EFFECTS, "}")
+		}
+		fmt.Println(len(hand), " - skip")
+    input := tools.Input("Select a number\n> ")
+    choice, err := strconv.Atoi(input)
+    if (err != nil) {
+      fmt.Println("opção inválida!")
+    } 
+    if (choice >= 0 && choice <= len(hand)) {
+      if choice == len(hand) {
+				sendRequest(tools.SkipPhase.String(), "", send_channel)
+        return // encerra a função
+      }
+      sendRequest(tools.PlaceCard.String(), hand[choice].NAME, send_channel)
+      return
+    } else {
+      fmt.Println("opção inválida!")
+    }
+	}
+}
+
+func getData[T tools.Serializable](data any) T {
+	mapped, ok := data.(map[string]interface{})
+	if !ok {
+		fmt.Println("[error] - an error occourred...")
+		os.Exit(1)
+	}
+	ser_map, err := tools.SerializeJson(mapped)
+	if err != nil {
+		fmt.Println("[error] - an error occourred...", err)
+		os.Exit(1)
+	}
+	var structure T
+	err = tools.Deserializejson(ser_map, &structure)
+	if err != nil {
+		fmt.Println("[error] - an error occourred...", err)
+		os.Exit(1)
+	}
+	return structure
 }
 
 func sendRequest(cmd string, data any, send_channel chan []byte) {

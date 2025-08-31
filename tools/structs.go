@@ -9,7 +9,6 @@ const (
 	Main
 	Maintenance
 	End
-	StandBy
 	Register Cmd = iota
 	Login
 	Logout
@@ -29,7 +28,6 @@ var PhaseName = map[TurnPhase]string{
 	Main:        "main",
 	Maintenance: "maintenance",
 	End:         "end",
-	StandBy:     "standby",
 }
 var CmdName = map[Cmd]string{
 	Register:    "register",
@@ -87,6 +85,7 @@ type Card struct {
 
 type GameState struct {
 	Opponent struct {
+		Username  string `json:"username"`
 		Hand      int    `json:"hand"`
 		Deck      int    `json:"deck"`
 		Graveyard []Card `json:"graveyard"`
@@ -106,6 +105,7 @@ type GameState struct {
 	} `json:"you"`
 	Turn  string `json:"turn"`
 	Phase string `json:"phase"`
+	Round int    `json:"round"`
 }
 
 type Serializable interface {
@@ -114,8 +114,6 @@ type Serializable interface {
 
 func NextPhase(actualPhase TurnPhase) TurnPhase {
 	switch actualPhase {
-	case StandBy:
-		return Refill
 	case Refill:
 		return Draw
 	case Draw:
@@ -125,7 +123,7 @@ func NextPhase(actualPhase TurnPhase) TurnPhase {
 	case Maintenance:
 		return End
 	case End:
-		return StandBy
+		return Refill
 	default:
 		return actualPhase
 	}
