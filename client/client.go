@@ -167,7 +167,11 @@ QUEUE_LOOP:
 			case tools.Main.String():
           mainPhase(gamestate.You.Hand, send_channel)
 			case tools.Maintenance.String():
+				tools.Input("You want to do something?\n> ")
+				sendRequest(tools.SkipPhase.String(), "", send_channel)
 			case tools.End.String():
+				tools.Input("You want to do something?\n> ")
+				sendRequest(tools.SkipPhase.String(), "", send_channel)
 			default:
 			}
 		}

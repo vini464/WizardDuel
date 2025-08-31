@@ -13,6 +13,7 @@ const (
 	USERDB = "database/users.json"
 )
 
+/**
 type PlayerData struct {
 	hp              int
 	sp              int
@@ -29,6 +30,7 @@ type Game struct {
 	gameData [2]PlayerData // informações do campo de cada jogador
 	turn     int
 }
+**/
 
 type CardSet struct {
 	commons   []tools.Card
@@ -42,6 +44,7 @@ type UserInfo struct {
 	opponent     string // username do oponente
 	send_channel chan []byte
 	data         tools.UserData
+	gamestate    tools.GameState // só quando estiver pariado
 }
 
 var QUEUE = make([]string, 0)
@@ -109,7 +112,7 @@ LOOP:
 						surrender(username, send_channel, mu, p_mu)
 					}
 				}
-        delete(ONLINE_PLAYERS, username)
+				delete(ONLINE_PLAYERS, username)
 				break LOOP
 			}
 		}
@@ -162,6 +165,42 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 	case tools.SaveDeck.String():
 	default:
 		fmt.Println("[error] - unknown command")
+	}
+}
+
+func placeCard(username string, cardname string, send_channel chan []byte, p_mu *sync.Mutex) {
+	p_mu.Lock()
+	defer p_mu.Unlock()
+	if ONLINE_PLAYERS[username].paried {
+		hand := ONLINE_PLAYERS[username].gamestate.You.Hand
+		cardId := -1
+		for id, card := range hand {
+			if card.NAME == cardname {
+				cardId = id
+			}
+		}
+		if cardId == -1 {
+			sendResponse("error", "You dont have that card in hand", send_channel)
+			return
+		}
+		card := hand[cardId]
+		if card.COST > ONLINE_PLAYERS[username].gamestate.You.Energy {
+			sendResponse("error", "You dont have enougth energy", send_channel)
+			return
+		}
+		for _, effect := range card.EFFECTS {
+			switch effect.TYPE {
+			case "damage":
+				fmt.Println("You dealt", effect.AMOUNT, "damage")
+        ONLINE_PLAYERS[username].gamestate.Opponent.HP -= effect.AMOUNT
+			case "heal":
+				fmt.Println("You heal", effect.AMOUNT, "damage")
+        ONLINE_PLAYERS[username].gamestate.You.HP += effect.AMOUNT
+      default:
+      fmt.Println("Unknown effect")
+			}
+		}
+
 	}
 }
 
