@@ -94,50 +94,51 @@ func initialPage() string {
 }
 
 func online(credentials tools.UserCredentials, send_channel chan []byte, receive_channel chan []byte, error_channel chan error) {
-	var choice = ""
-	for choice != "1" && choice != "0" {
-		fmt.Println("You are logged!")
-		fmt.Println("1 - Find match")
-		fmt.Println("0 - Exit")
-		choice = tools.Input("> ")
-		exec.Command("clear")
-	}
-	if choice == "0" {
-		os.Exit(0)
-	}
-	// iniciando uma partida
-	sendRequest(tools.Play.String(), credentials, send_channel)
-	var receivedData any
-QUEUE_LOOP:
 	for {
-		select {
-		case serialized := <-receive_channel:
-			var receive tools.Message
-			err := tools.Deserializejson(serialized, &receive)
-			if err != nil {
-				fmt.Println("[error] an error occourred", err)
-				os.Exit(1)
-			}
-			switch receive.CMD {
-			case "ok":
-				fmt.Println("You are playing with: ", receive.DATA) // receive.Data vai ser o GameState
-				receivedData = receive.DATA
-				break QUEUE_LOOP // só sai do loop quando encontrar uma partida
-			case "error":
-				fmt.Println("Unable to Play:", receive.DATA)
-				os.Exit(1)
-			case "queued":
-				fmt.Println("Waiting for an opponent...")
-			default:
-				fmt.Println("[error] unknown command:", receive.CMD)
-			}
-		case err := <-error_channel:
-			fmt.Println("[error] an error occourred", err)
+		choice := menu("EXIT", "PLAY")
+		if choice == 1 {
+			os.Exit(0)
 		}
+		// iniciando uma partida
+		sendRequest(tools.Play.String(), credentials, send_channel)
+		var receivedData any
+    QUEUE_LOOP:
+		for {
+			select {
+			case serialized := <-receive_channel:
+				var receive tools.Message
+				err := tools.Deserializejson(serialized, &receive)
+				if err != nil {
+					fmt.Println("[error] an error occourred", err)
+					os.Exit(1)
+				}
+				switch receive.CMD {
+				case "ok":
+					fmt.Println("You are playing with: ", receive.DATA) // receive.Data vai ser o GameState
+					receivedData = receive.DATA
+          match(receivedData, credentials, send_channel)
+					break QUEUE_LOOP // só sai do loop quando encontrar uma partida
+				case "error":
+					fmt.Println("Unable to Play:", receive.DATA)
+					break QUEUE_LOOP // só sai do loop quando encontrar uma partida
+				case "queued":
+					fmt.Println("Waiting for an opponent...")
+				default:
+					fmt.Println("[error] unknown command:", receive.CMD)
+					break QUEUE_LOOP // só sai do loop quando encontrar uma partida
+				}
+			case err := <-error_channel:
+				fmt.Println("[error] an error occourred", err)
+			}
+		}
+		// em uma partida
+		fmt.Println("out of the select")
 	}
-	// em uma partida
+}
 
+func match(receivedData any, credentials tools.UserCredentials, send_channel chan []byte) {
 	for {
+		fmt.Println("inside game loop")
 		exec.Command("clear")
 		gamestate := getData[tools.GameState](receivedData)
 		fmt.Println("TURN:", gamestate.Turn)
@@ -165,7 +166,7 @@ QUEUE_LOOP:
 				tools.Input("You want to do something?\n> ")
 				sendRequest(tools.SkipPhase.String(), "", send_channel)
 			case tools.Main.String():
-          mainPhase(gamestate.You.Hand, send_channel)
+				mainPhase(gamestate.You.Hand, send_channel)
 			case tools.Maintenance.String():
 				tools.Input("You want to do something?\n> ")
 				sendRequest(tools.SkipPhase.String(), "", send_channel)
@@ -178,45 +179,68 @@ QUEUE_LOOP:
 	}
 }
 
+func menu(last string, args ...string) int {
+	maxOpt := len(args)
+	if last == "" {
+		maxOpt--
+	}
+	for {
+		for id, arg := range args {
+			fmt.Println(id, "-", arg)
+		}
+		if last != "" {
+			fmt.Println(len(args), "-", "Back")
+		}
+		input := tools.Input("Select a number\n> ")
+		choice, err := strconv.Atoi(input)
+		if err != nil {
+			fmt.Println("opção inválida!")
+		}
+		if choice >= 0 && choice <= maxOpt {
+			return choice
+		}
+	}
+}
+
 func mainPhase(hand []tools.Card, send_channel chan []byte) {
 	for {
 		for id, card := range hand {
 			fmt.Println(id, "-", card.NAME, "{ cost:", card.COST, "efects:", card.EFFECTS, "}")
 		}
 		fmt.Println(len(hand), " - skip")
-    input := tools.Input("Select a number\n> ")
-    choice, err := strconv.Atoi(input)
-    if (err != nil) {
-      fmt.Println("opção inválida!")
-    } 
-    if (choice >= 0 && choice <= len(hand)) {
-      if choice == len(hand) {
+		input := tools.Input("Select a number\n> ")
+		choice, err := strconv.Atoi(input)
+		if err != nil {
+			fmt.Println("opção inválida!")
+		}
+		if choice >= 0 && choice <= len(hand) {
+			if choice == len(hand) {
 				sendRequest(tools.SkipPhase.String(), "", send_channel)
-        return // encerra a função
-      }
-      sendRequest(tools.PlaceCard.String(), hand[choice].NAME, send_channel)
-      return
-    } else {
-      fmt.Println("opção inválida!")
-    }
+				return // encerra a função
+			}
+			sendRequest(tools.PlaceCard.String(), hand[choice].NAME, send_channel)
+			return
+		} else {
+			fmt.Println("opção inválida!")
+		}
 	}
 }
 
 func getData[T tools.Serializable](data any) T {
 	mapped, ok := data.(map[string]interface{})
 	if !ok {
-		fmt.Println("[error] - an error occourred...")
+		fmt.Println("(!ok)[error] - an error occourred...")
 		os.Exit(1)
 	}
 	ser_map, err := tools.SerializeJson(mapped)
 	if err != nil {
-		fmt.Println("[error] - an error occourred...", err)
+		fmt.Println("(err)[error] - an error occourred...", err)
 		os.Exit(1)
 	}
 	var structure T
 	err = tools.Deserializejson(ser_map, &structure)
 	if err != nil {
-		fmt.Println("[error] - an error occourred...", err)
+		fmt.Println("(err)[error] - an error occourred...", err)
 		os.Exit(1)
 	}
 	return structure

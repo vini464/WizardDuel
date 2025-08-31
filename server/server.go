@@ -44,6 +44,7 @@ type UserInfo struct {
 	opponent     string // username do oponente
 	send_channel chan []byte
 	data         tools.UserData
+	main_deck    tools.Deck
 	gamestate    tools.GameState // só quando estiver pariado
 }
 
@@ -130,35 +131,41 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 	switch request.CMD {
 	case tools.Register.String():
 		data, ok := getData[tools.UserCredentials](request.DATA)
-    if ok {
-		register(data, send_channel, mu)
-    } else {
+		if ok {
+			register(data, send_channel, mu)
+		} else {
 			sendResponse("error", "bad request", send_channel)
-    }
+		}
 	case tools.Login.String():
 		data, ok := getData[tools.UserCredentials](request.DATA)
-    if ok {
-      login(data, send_channel, mu, p_mu, username)
-    } else {
+		if ok {
+			login(data, send_channel, mu, p_mu, username)
+		} else {
 			sendResponse("error", "bad request", send_channel)
-    }
+		}
 	case tools.Logout.String():
 		logout(username, send_channel, mu, p_mu)
 	case tools.Surrender.String():
 		surrender(*username, send_channel, mu, p_mu)
 	case tools.Play.String():
-		play(*username, send_channel, q_mu)
+    fmt.Println("play command")
+		play(*username, send_channel, q_mu, p_mu)
+    fmt.Println("mutext unlocked")
 	case tools.PlaceCard.String():
 		data, ok := getData[string](request.DATA)
 		if ok {
 			placeCard(*username, data, send_channel, p_mu)
-		} else{
+		} else {
 			sendResponse("error", "bad request", send_channel)
-    }
+		}
 	case tools.DrawCard.String():
+		sendResponse("error", "not implemented", send_channel)
 	case tools.DiscardCard.String():
+		sendResponse("error", "not implemented", send_channel)
 	case tools.SkipPhase.String():
+		sendResponse("error", "not implemented", send_channel)
 	case tools.GetBooster.String():
+		sendResponse("error", "not implemented", send_channel)
 	case tools.SaveDeck.String():
 	default:
 		fmt.Println("[error] - unknown command")
@@ -197,27 +204,88 @@ func placeCard(username string, cardname string, send_channel chan []byte, p_mu 
 				fmt.Println("Unknown effect")
 			}
 		}
+    // remove a carta da mão
+    ONLINE_PLAYERS[username].gamestate.You.Hand = append(ONLINE_PLAYERS[username].gamestate.You.Hand[:cardId], ONLINE_PLAYERS[username].gamestate.You.Hand[cardId:]...)
 	}
 }
 
-func play(username string, send_channel chan []byte, q_mu *sync.Mutex) {
+func play(username string, send_channel chan []byte, q_mu *sync.Mutex, p_mu *sync.Mutex) {
+  fmt.Println("[debug] - before unlock")
 	q_mu.Lock()
+	p_mu.Lock()
+  fmt.Println("[debug] - after unlock")
 	defer q_mu.Unlock()
+	defer p_mu.Unlock()
+  
+  // o cara não tem um deck
+  if ONLINE_PLAYERS[username].main_deck.DeckName == "" && len(ONLINE_PLAYERS[username].main_deck.Cards) == 0  {
+    sendResponse("error", "You don't have a deck", send_channel)
+    return
+  }
+
 	var opponent_name string
 	if len(QUEUE) > 0 {
+    fmt.Println("[debug] - inside queue")
 		opponent_name, QUEUE = tools.Dequeue(QUEUE)
-		opponent := ONLINE_PLAYERS[opponent_name]
-		opponent.paried = true
-		opponent.opponent = username
-		player := ONLINE_PLAYERS[username]
-		player.opponent = opponent_name
-		player.paried = true
-		sendResponse("ok", opponent_name, send_channel)
-		sendResponse("ok", username, opponent.send_channel)
+    fmt.Println("[debug] - dequeued opponent:", opponent_name)
+		gamestate := &ONLINE_PLAYERS[username].gamestate
+    fmt.Println("[debug] - get user gamestate:")
+		op_gamestate := &ONLINE_PLAYERS[opponent_name].gamestate
+
+    fmt.Println("[debug] - set player gamstate")
+    // sempre o jogador que estava esperando começa o jogo
+		setGameState(gamestate, username, opponent_name)
+		setGameState(op_gamestate, opponent_name, opponent_name)
+
+    fmt.Println("[debug] - set op gamestate")
+		setOpponentState(gamestate, op_gamestate, opponent_name)
+		setOpponentState(op_gamestate, gamestate, username)
+
+    fmt.Println("gamestate: ", gamestate)
+    fmt.Println("op_gamestate: ", op_gamestate)
+
+
+    fmt.Println("[debug] - sending response")
+		sendResponse("ok", *gamestate, send_channel)
+		sendResponse("ok", *op_gamestate, ONLINE_PLAYERS[opponent_name].send_channel)
 
 	} else {
 		QUEUE = tools.Enqueue(QUEUE, username)
 	}
+}
+
+func setOpponentState(gamestate *tools.GameState, op_gamestate *tools.GameState, op_name string) {
+	gamestate.Opponent.Username = op_name
+	gamestate.Opponent.Crystals = op_gamestate.Opponent.Crystals
+	gamestate.Opponent.Deck = op_gamestate.You.Deck
+	gamestate.Opponent.HP = op_gamestate.You.HP
+	gamestate.Opponent.SP = op_gamestate.You.SP
+	gamestate.Opponent.Energy = op_gamestate.You.Energy
+	gamestate.Opponent.Graveyard = op_gamestate.You.Graveyard
+	gamestate.Opponent.Hand = len(op_gamestate.You.Hand)
+
+}
+
+func setGameState(gamestate *tools.GameState, username string, turn string) {
+  fmt.Println("[debug] - 1")
+	gamestate.You.Crystals = 0
+  fmt.Println("[debug] - 2")
+	gamestate.You.HP = 10
+  fmt.Println("[debug] - 3")
+	gamestate.You.SP = 10
+  fmt.Println("[debug] - 4")
+	gamestate.You.Energy = 0
+  fmt.Println("[debug] - 5")
+	gamestate.You.Graveyard = make([]tools.Card, 0)
+  fmt.Println("[debug] - 6")
+	gamestate.You.Hand = append(gamestate.You.Hand, ONLINE_PLAYERS[username].main_deck.Cards[:5]...)
+  fmt.Println("[debug] - 7")
+	gamestate.You.Deck = len(ONLINE_PLAYERS[username].main_deck.Cards)
+  fmt.Println("[debug] - 8")
+	gamestate.Turn = turn
+  fmt.Println("[debug] - 9")
+	gamestate.Phase = tools.Refill.String()
+  fmt.Println("[debug] - 10")
 }
 
 func surrender(username string, send_channel chan []byte, mu *sync.Mutex, p_mu *sync.Mutex) {
@@ -268,8 +336,8 @@ func logout(username *string, send_channel chan []byte, mu *sync.Mutex, p_mu *sy
 }
 
 func login(credentials tools.UserCredentials, send_channel chan []byte, mu *sync.Mutex, p_mu *sync.Mutex, username *string) {
-  p_mu.Lock()
-  defer p_mu.Unlock()
+	p_mu.Lock()
+	defer p_mu.Unlock()
 	_, ok := ONLINE_PLAYERS[credentials.USER]
 	if ok {
 		sendResponse("error", "User Already Logged", send_channel)

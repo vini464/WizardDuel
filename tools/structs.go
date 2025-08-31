@@ -70,6 +70,7 @@ type UserData struct {
 	Password   string `json:"password"`
 	Coins      int    `json:"coins"`
 	SavedDecks []Deck `json:"savedDecks"`
+	MainDeck   Deck   `json:"mainDeck"`
 }
 
 type Effect struct {

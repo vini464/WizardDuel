@@ -47,7 +47,7 @@ func CreateUser(credentials UserCredentials, filename string, mu *sync.Mutex) (b
 		}
 	}
 
-	new_user := UserData{Username: credentials.USER, Password: credentials.PSWD, Coins: 0, SavedDecks: nil}
+	new_user := UserData{Username: credentials.USER, Password: credentials.PSWD, Coins: 0, SavedDecks: nil, MainDeck: Deck{}}
 
 	users = append(users, new_user)
 
