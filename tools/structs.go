@@ -1,6 +1,5 @@
 package tools
 
-
 type TurnPhase int
 type Cmd int
 
@@ -58,7 +57,6 @@ type Message struct {
 	DATA any    `json:"data.omitempty"`
 }
 
-// Algumas estruturas usadas para enviar mensagens
 type UserCredentials struct {
 	USER string `json:"user"`
 	PSWD string `json:"pswd"`
@@ -87,8 +85,31 @@ type Card struct {
 	EFFECTS []Effect `json:"effects"`
 }
 
+type GameState struct {
+	Opponent struct {
+		Hand      int    `json:"hand"`
+		Deck      int    `json:"deck"`
+		Graveyard []Card `json:"graveyard"`
+		HP        int    `json:"hp"`
+		SP        int    `json:"sp"`
+		Energy    int    `json:"energy"`
+		Crystals  int    `json:"crystals"`
+	} `json:"opponent"`
+	You struct {
+		Hand      []Card `json:"hand"`
+		Deck      int    `json:"deck"`
+		Graveyard []Card `json:"graveyard"`
+		HP        int    `json:"hp"`
+		SP        int    `json:"sp"`
+		Energy    int    `json:"energy"`
+		Crystals  int    `json:"crystals"`
+	} `json:"you"`
+	Turn  string `json:"turn"`
+	Phase string `json:"phase"`
+}
+
 type Serializable interface {
-	Message | UserCredentials | Card | Effect | []UserCredentials | UserData | []UserData | map[string]string | map[string]interface{}
+	GameState | Message | UserCredentials | Card | Effect | []UserCredentials | UserData | []UserData | map[string]string | map[string]interface{}
 }
 
 func NextPhase(actualPhase TurnPhase) TurnPhase {
