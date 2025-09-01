@@ -160,7 +160,7 @@
   ]
  },
  {
-  "qnt": 96000,
+  "qnt": 95999,
   "type": "nature",
   "name": "Razor Leaf",
   "rarity": "uncommon",
@@ -186,7 +186,7 @@
   ]
  },
  {
-  "qnt": 96000,
+  "qnt": 95999,
   "type": "nature",
   "name": "Protective Root",
   "rarity": "uncommon",
@@ -531,7 +531,7 @@
   ]
  },
  {
-  "qnt": 96000,
+  "qnt": 95999,
   "type": "fire",
   "name": "Devastating Fire",
   "rarity": "uncommon",
@@ -557,7 +557,7 @@
   ]
  },
  {
-  "qnt": 48000,
+  "qnt": 47999,
   "type": "fire",
   "name": "Overwhelming Inferno",
   "rarity": "rare",
@@ -682,7 +682,7 @@
   ]
  },
  {
-  "qnt": 192000,
+  "qnt": 191999,
   "type": "water",
   "name": "Calm Mist",
   "rarity": "common",
