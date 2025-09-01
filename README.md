@@ -44,5 +44,5 @@ Now let's stablish some rules:
  6. The damage is dealt to the PS and the remaining is dealt to the HP.
  7. The damage dealt to the SP is permanent.
  8. All spells can only be played at your Main phase.
- 9. If you don't have any cards in your Deck or your hand
+ 9. If you don't have any cards in your Deck or your hand you lose 1 HP
 10. If your HP gets down to 0 you lose the game.

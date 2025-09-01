@@ -1,6 +1,5 @@
 package tools
 
-
 type TurnPhase int
 type Cmd int
 
@@ -10,6 +9,7 @@ const (
 	Main
 	Maintenance
 	End
+	Set          // fase inicial para preparar o campo dos jogadores
 	Register Cmd = iota
 	Login
 	Logout
@@ -24,6 +24,7 @@ const (
 )
 
 var PhaseName = map[TurnPhase]string{
+	Set:         "set",
 	Refill:      "refill",
 	Draw:        "draw",
 	Main:        "main",
@@ -53,7 +54,7 @@ func (cmd Cmd) String() string {
 
 type Message struct {
 	CMD  string `json:"cmd"`
-	DATA []byte    `json:"data.omitempty"`
+	DATA []byte `json:"data.omitempty"`
 }
 
 type UserCredentials struct {
@@ -115,21 +116,23 @@ type GameState struct {
 }
 
 type Serializable interface {
-	string | GameState | Message | UserCredentials | Card | []Card | Effect | []UserCredentials | UserData | []UserData | map[string]string | map[string]interface{} |[]map[string]interface{}
+	string | GameState | Message | UserCredentials | Card | []Card | Effect | []UserCredentials | UserData | []UserData | map[string]string | map[string]interface{} | []map[string]interface{}
 }
 
-func NextPhase(actualPhase TurnPhase) TurnPhase {
+func NextPhase(actualPhase string) string {
 	switch actualPhase {
-	case Refill:
-		return Draw
-	case Draw:
-		return Main
-	case Main:
-		return Maintenance
-	case Maintenance:
-		return End
-	case End:
-		return Refill
+	case Refill.String():
+		return Draw.String()
+	case Draw.String():
+		return Main.String()
+	case Main.String():
+		return Maintenance.String()
+	case Maintenance.String():
+		return End.String()
+	case End.String():
+		return Refill.String()
+	case Set.String():
+		return Main.String()
 	default:
 		return actualPhase
 	}
