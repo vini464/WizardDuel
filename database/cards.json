@@ -26,7 +26,7 @@
   ]
  },
  {
-  "qnt": 192000,
+  "qnt": 191999,
   "type": "nature",
   "name": "Renewing Root",
   "rarity": "common",
@@ -199,7 +199,7 @@
   ]
  },
  {
-  "qnt": 96000,
+  "qnt": 95999,
   "type": "nature",
   "name": "Wild Growth",
   "rarity": "uncommon",
@@ -449,7 +449,7 @@
   ]
  },
  {
-  "qnt": 192000,
+  "qnt": 191999,
   "type": "fire",
   "name": "Continuous Flame",
   "rarity": "common",
@@ -492,7 +492,7 @@
   ]
  },
  {
-  "qnt": 96000,
+  "qnt": 95999,
   "type": "fire",
   "name": "Torch of Fury",
   "rarity": "uncommon",
@@ -518,7 +518,7 @@
   ]
  },
  {
-  "qnt": 96000,
+  "qnt": 95999,
   "type": "fire",
   "name": "Rising Flame",
   "rarity": "uncommon",
@@ -609,7 +609,7 @@
   ]
  },
  {
-  "qnt": 24000,
+  "qnt": 23999,
   "type": "fire",
   "name": "Supreme Hellfire",
   "rarity": "legendary",
@@ -785,7 +785,7 @@
   ]
  },
  {
-  "qnt": 192000,
+  "qnt": 191999,
   "type": "water",
   "name": "Light Waterfall",
   "rarity": "common",
@@ -837,7 +837,7 @@
   ]
  },
  {
-  "qnt": 96000,
+  "qnt": 95999,
   "type": "water",
   "name": "Torrent",
   "rarity": "uncommon",
@@ -880,7 +880,7 @@
   ]
  },
  {
-  "qnt": 24000,
+  "qnt": 23998,
   "type": "water",
   "name": "Tsunami",
   "rarity": "legendary",

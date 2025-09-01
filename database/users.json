@@ -1,1 +1,204 @@
-[{"username":"vini","password":"74657374616e646f206861736881dc9bdb52d04dc20036dbd8313ed055","coins":0,"savedDecks":null,"mainDeck":{"deckname":"","cards":null},"allCards":[{"qnt":1,"type":"water","name":"Calm Mist","rarity":"common","cost":2,"effects":[{"type":"draw","amount":1}]},{"qnt":1,"type":"nature","name":"Razor Leaf","rarity":"uncommon","cost":3,"effects":[{"type":"damage","amount":3}]},{"qnt":1,"type":"nature","name":"Protective Root","rarity":"uncommon","cost":5,"effects":[{"type":"shield","amount":6}]},{"qnt":1,"type":"fire","name":"Devastating Fire","rarity":"uncommon","cost":5,"effects":[{"type":"damage","amount":7}]},{"qnt":1,"type":"fire","name":"Overwhelming Inferno","rarity":"rare","cost":8,"effects":[{"type":"damage","amount":10}]}]}]
+[
+ {
+  "username": "vini",
+  "password": "74657374616e646f206861736881dc9bdb52d04dc20036dbd8313ed055",
+  "coins": 0,
+  "savedDecks": null,
+  "mainDeck": {
+   "deckname": "",
+   "cards": null
+  },
+  "allCards": [
+   {
+    "qnt": 1,
+    "type": "water",
+    "name": "Calm Mist",
+    "rarity": "common",
+    "cost": 2,
+    "effects": [
+     {
+      "type": "draw",
+      "amount": 1
+     }
+    ]
+   },
+   {
+    "qnt": 1,
+    "type": "nature",
+    "name": "Razor Leaf",
+    "rarity": "uncommon",
+    "cost": 3,
+    "effects": [
+     {
+      "type": "damage",
+      "amount": 3
+     }
+    ]
+   },
+   {
+    "qnt": 1,
+    "type": "nature",
+    "name": "Protective Root",
+    "rarity": "uncommon",
+    "cost": 5,
+    "effects": [
+     {
+      "type": "shield",
+      "amount": 6
+     }
+    ]
+   },
+   {
+    "qnt": 1,
+    "type": "fire",
+    "name": "Devastating Fire",
+    "rarity": "uncommon",
+    "cost": 5,
+    "effects": [
+     {
+      "type": "damage",
+      "amount": 7
+     }
+    ]
+   },
+   {
+    "qnt": 1,
+    "type": "fire",
+    "name": "Overwhelming Inferno",
+    "rarity": "rare",
+    "cost": 8,
+    "effects": [
+     {
+      "type": "damage",
+      "amount": 10
+     }
+    ]
+   },
+   {
+    "qnt": 1,
+    "type": "water",
+    "name": "Light Waterfall",
+    "rarity": "common",
+    "cost": 3,
+    "effects": [
+     {
+      "type": "heal",
+      "amount": 3
+     }
+    ]
+   },
+   {
+    "qnt": 1,
+    "type": "fire",
+    "name": "Supreme Hellfire",
+    "rarity": "legendary",
+    "cost": 10,
+    "effects": [
+     {
+      "type": "damage",
+      "amount": 15
+     }
+    ]
+   },
+   {
+    "qnt": 2,
+    "type": "water",
+    "name": "Tsunami",
+    "rarity": "legendary",
+    "cost": 10,
+    "effects": [
+     {
+      "type": "damage",
+      "amount": 10
+     },
+     {
+      "type": "heal",
+      "amount": 5
+     }
+    ]
+   },
+   {
+    "qnt": 1,
+    "type": "fire",
+    "name": "Continuous Flame",
+    "rarity": "common",
+    "cost": 3,
+    "effects": [
+     {
+      "type": "damage",
+      "amount": 2
+     },
+     {
+      "type": "shield",
+      "amount": 1
+     }
+    ]
+   },
+   {
+    "qnt": 1,
+    "type": "nature",
+    "name": "Wild Growth",
+    "rarity": "uncommon",
+    "cost": 5,
+    "effects": [
+     {
+      "type": "energy",
+      "amount": 2
+     }
+    ]
+   },
+   {
+    "qnt": 1,
+    "type": "nature",
+    "name": "Renewing Root",
+    "rarity": "common",
+    "cost": 2,
+    "effects": [
+     {
+      "type": "heal",
+      "amount": 3
+     }
+    ]
+   },
+   {
+    "qnt": 1,
+    "type": "fire",
+    "name": "Rising Flame",
+    "rarity": "uncommon",
+    "cost": 6,
+    "effects": [
+     {
+      "type": "damage",
+      "amount": 8
+     }
+    ]
+   },
+   {
+    "qnt": 1,
+    "type": "water",
+    "name": "Torrent",
+    "rarity": "uncommon",
+    "cost": 5,
+    "effects": [
+     {
+      "type": "damage",
+      "amount": 5
+     }
+    ]
+   },
+   {
+    "qnt": 1,
+    "type": "fire",
+    "name": "Torch of Fury",
+    "rarity": "uncommon",
+    "cost": 4,
+    "effects": [
+     {
+      "type": "next_spell_damage_bonus",
+      "amount": 2
+     }
+    ]
+   }
+  ]
+ }
+]
