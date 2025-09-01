@@ -1,43 +1,21 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"net"
+	"os"
 	"sync"
 
 	"github.com/vini464/WizardDuel/tools"
 )
 
 const (
-	USERDB = "database/users.json"
+	USERDB    = "database/users.json"
+	CARDSFILE = "database/cards.json"
 )
-
-/**
-type PlayerData struct {
-	hp              int
-	sp              int
-	crystals        int
-	avaiable_energy int
-	hand            []tools.Card
-	deck            []tools.Card
-	graveyard       []tools.Card
-	phase           tools.TurnPhase
-}
-
-type Game struct {
-	players  [2]string     // username de cada jogador
-	gameData [2]PlayerData // informações do campo de cada jogador
-	turn     int
-}
-**/
-
-type CardSet struct {
-	commons   []tools.Card
-	uncommons []tools.Card
-	rare      []tools.Card
-	legendary []tools.Card
-}
 
 type UserInfo struct {
 	paried       bool
@@ -55,6 +33,24 @@ func main() {
 	var mu sync.Mutex
 	var p_mu sync.Mutex
 	var q_mu sync.Mutex
+	var c_mu sync.Mutex
+
+	// Verifica a quantidade do stock
+	sum := 0
+	cards, err := tools.ReadFile[[]tools.Card](CARDSFILE)
+	if err != nil {
+		fmt.Println("Some shit happen :/", err)
+		os.Exit(1)
+	} else {
+		for _, card := range cards {
+			sum += card.Qnt
+		}
+		if sum < 6000 && sum > 0 {
+			updateStock(6000%sum, &c_mu) // atualiza a quantidade de cartas se ela estiver abaixo do mínimo
+		} else if sum == 0 {
+			updateStock(6000, &c_mu) // atualiza a quantidade de cartas se ela estiver abaixo do mínimo
+		}
+	}
 
 	fmt.Println("[debug] - iniciando o servidor...")
 	listener, err := net.Listen(tools.SERVER_TYPE, tools.PATH)
@@ -70,11 +66,11 @@ func main() {
 			continue
 		}
 
-		go handleCLient(conn, &mu, &p_mu, &q_mu)
+		go handleCLient(conn, &mu, &p_mu, &q_mu, &c_mu)
 	}
 }
 
-func handleCLient(conn net.Conn, mu *sync.Mutex, p_mu *sync.Mutex, q_mu *sync.Mutex) {
+func handleCLient(conn net.Conn, mu *sync.Mutex, p_mu *sync.Mutex, q_mu *sync.Mutex, c_mu *sync.Mutex) {
 	var wg sync.WaitGroup
 	receive_channel := make(chan []byte)
 	send_channel := make(chan []byte)
@@ -93,10 +89,10 @@ LOOP:
 	for {
 		select {
 		case income := <-receive_channel:
-			handleReceive(send_channel, income, &username, mu, p_mu, q_mu)
+			handleReceive(send_channel, income, &username, mu, p_mu, q_mu, c_mu)
 		case err := <-error_channel:
 			if err == io.EOF {
-				fmt.Println("[error] - client forced to quit")
+				fmt.Println("[debug] - Client Was Disconnected")
 				var index int
 				found := false
 				for id, user := range QUEUE {
@@ -113,14 +109,19 @@ LOOP:
 						surrender(username, send_channel, mu, p_mu)
 					}
 				}
+        mu.Lock()
+        credentials := tools.UserCredentials{USER: username, PSWD: ONLINE_PLAYERS[username].data.Password}
+        tools.UpdateUser(credentials, ONLINE_PLAYERS[username].data, USERDB, p_mu)
 				delete(ONLINE_PLAYERS, username)
+
+        mu.Unlock()
 				break LOOP
 			}
 		}
 	}
 }
 
-func handleReceive(send_channel chan []byte, income []byte, username *string, mu *sync.Mutex, p_mu *sync.Mutex, q_mu *sync.Mutex) {
+func handleReceive(send_channel chan []byte, income []byte, username *string, mu *sync.Mutex, p_mu *sync.Mutex, q_mu *sync.Mutex, c_mu *sync.Mutex) {
 	var request tools.Message
 	err := tools.Deserializejson(income, &request)
 	if err != nil {
@@ -132,7 +133,7 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 	case tools.Register.String():
 		data, ok := getData[tools.UserCredentials](request.DATA)
 		if ok {
-			register(data, send_channel, mu)
+			register(data, send_channel, mu, c_mu)
 		} else {
 			sendResponse("error", "bad request", send_channel)
 		}
@@ -148,9 +149,9 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 	case tools.Surrender.String():
 		surrender(*username, send_channel, mu, p_mu)
 	case tools.Play.String():
-    fmt.Println("play command")
+		fmt.Println("play command")
 		play(*username, send_channel, q_mu, p_mu)
-    fmt.Println("mutext unlocked")
+		fmt.Println("mutext unlocked")
 	case tools.PlaceCard.String():
 		data, ok := getData[string](request.DATA)
 		if ok {
@@ -158,13 +159,35 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 		} else {
 			sendResponse("error", "bad request", send_channel)
 		}
+	case tools.GetBooster.String():
+		booster, err := generateBooster(c_mu)
+		if err != nil {
+			sendResponse("error", "Internal Error", send_channel)
+		}
+		// adding cards to player data
+		mu.Lock()
+		if ONLINE_PLAYERS[*username].data.AllCards == nil {
+			ONLINE_PLAYERS[*username].data.AllCards = make([]tools.Card, 0)
+		}
+		for _, op_card := range booster {
+			found := false
+			for id, card := range ONLINE_PLAYERS[*username].data.AllCards {
+				if op_card.Name == card.Name {
+					found = true
+					ONLINE_PLAYERS[*username].data.AllCards[id].Qnt++
+				}
+			}
+			if !found {
+				ONLINE_PLAYERS[*username].data.AllCards = append(ONLINE_PLAYERS[*username].data.AllCards, op_card)
+			}
+		}
+		defer mu.Unlock()
+		sendResponse("ok", booster, send_channel)
 	case tools.DrawCard.String():
 		sendResponse("error", "not implemented", send_channel)
 	case tools.DiscardCard.String():
 		sendResponse("error", "not implemented", send_channel)
 	case tools.SkipPhase.String():
-		sendResponse("error", "not implemented", send_channel)
-	case tools.GetBooster.String():
 		sendResponse("error", "not implemented", send_channel)
 	case tools.SaveDeck.String():
 	default:
@@ -179,7 +202,7 @@ func placeCard(username string, cardname string, send_channel chan []byte, p_mu 
 		hand := ONLINE_PLAYERS[username].gamestate.You.Hand
 		cardId := -1
 		for id, card := range hand {
-			if card.NAME == cardname {
+			if card.Name == cardname {
 				cardId = id
 			}
 		}
@@ -188,24 +211,24 @@ func placeCard(username string, cardname string, send_channel chan []byte, p_mu 
 			return
 		}
 		card := hand[cardId]
-		if card.COST > ONLINE_PLAYERS[username].gamestate.You.Energy {
+		if card.Cost > ONLINE_PLAYERS[username].gamestate.You.Energy {
 			sendResponse("error", "You dont have enougth energy", send_channel)
 			return
 		}
-		for _, effect := range card.EFFECTS {
-			switch effect.TYPE {
+		for _, effect := range card.Effects {
+			switch effect.Type {
 			case "damage":
-				fmt.Println("You dealt", effect.AMOUNT, "damage")
-				ONLINE_PLAYERS[username].gamestate.Opponent.HP -= effect.AMOUNT
+				fmt.Println("You dealt", effect.Amount, "damage")
+				ONLINE_PLAYERS[username].gamestate.Opponent.HP -= effect.Amount
 			case "heal":
-				fmt.Println("You heal", effect.AMOUNT, "HP")
-				ONLINE_PLAYERS[username].gamestate.You.HP += effect.AMOUNT
+				fmt.Println("You heal", effect.Amount, "HP")
+				ONLINE_PLAYERS[username].gamestate.You.HP += effect.Amount
 			default:
 				fmt.Println("Unknown effect")
 			}
 		}
-    // remove a carta da mão
-    ONLINE_PLAYERS[username].gamestate.You.Hand = append(ONLINE_PLAYERS[username].gamestate.You.Hand[:cardId], ONLINE_PLAYERS[username].gamestate.You.Hand[cardId:]...)
+		// remove a carta da mão
+		ONLINE_PLAYERS[username].gamestate.You.Hand = append(ONLINE_PLAYERS[username].gamestate.You.Hand[:cardId], ONLINE_PLAYERS[username].gamestate.You.Hand[cardId:]...)
 	}
 }
 
@@ -214,12 +237,12 @@ func play(username string, send_channel chan []byte, q_mu *sync.Mutex, p_mu *syn
 	p_mu.Lock()
 	defer q_mu.Unlock()
 	defer p_mu.Unlock()
-  
-  // o cara não tem um deck
-  if ONLINE_PLAYERS[username].main_deck.DeckName == "" && len(ONLINE_PLAYERS[username].main_deck.Cards) == 0  {
-    sendResponse("error", "You don't have a deck", send_channel)
-    return
-  }
+
+	// o cara não tem um deck
+	if ONLINE_PLAYERS[username].main_deck.DeckName == "" && len(ONLINE_PLAYERS[username].main_deck.Cards) == 0 {
+		sendResponse("error", "You don't have a deck", send_channel)
+		return
+	}
 
 	var opponent_name string
 	if len(QUEUE) > 0 {
@@ -227,13 +250,12 @@ func play(username string, send_channel chan []byte, q_mu *sync.Mutex, p_mu *syn
 		gamestate := &ONLINE_PLAYERS[username].gamestate
 		op_gamestate := &ONLINE_PLAYERS[opponent_name].gamestate
 
-    // sempre o jogador que estava esperando começa o jogo
+		// sempre o jogador que estava esperando começa o jogo
 		setGameState(gamestate, username, opponent_name)
 		setGameState(op_gamestate, opponent_name, opponent_name)
 
 		setOpponentState(gamestate, op_gamestate, opponent_name)
 		setOpponentState(op_gamestate, gamestate, username)
-
 		sendResponse("ok", *gamestate, send_channel)
 		sendResponse("ok", *op_gamestate, ONLINE_PLAYERS[opponent_name].send_channel)
 
@@ -332,8 +354,8 @@ func login(credentials tools.UserCredentials, send_channel chan []byte, mu *sync
 			fmt.Println("[debug] - User:", user.Username, "is now logged!")
 			userInfo := UserInfo{paried: false, opponent: "", send_channel: send_channel, data: user}
 			ONLINE_PLAYERS[user.Username] = &userInfo
-			sendResponse("ok", "User Logged In", send_channel)
 			*username = credentials.USER
+			sendResponse("ok", user, send_channel)
 			return
 		}
 
@@ -341,40 +363,91 @@ func login(credentials tools.UserCredentials, send_channel chan []byte, mu *sync
 	sendResponse("error", "Wrong User Or Password", send_channel)
 }
 
-func register(credentials tools.UserCredentials, send_channel chan []byte, mu *sync.Mutex) {
+func register(credentials tools.UserCredentials, send_channel chan []byte, mu *sync.Mutex, c_mu *sync.Mutex) {
 	fmt.Println("[debug] - message type:", credentials)
 	ok, desc := tools.CreateUser(credentials, USERDB, mu)
 	if ok {
 		sendResponse("ok", desc, send_channel)
+		updateStock(100, c_mu)
 		return
 	}
 	sendResponse("error", desc, send_channel)
 }
 
-func sendResponse(cmd string, data any, send_channel chan []byte) {
+func sendResponse[T tools.Serializable](cmd string, data T, send_channel chan []byte) {
 	fmt.Println("[error] -", data)
 	var response []byte
 	var err error
-	for response, err = tools.SerializeMessage(cmd, data); err != nil; {
+  serData , _ := tools.SerializeJson(data)
+	for response, err = tools.SerializeMessage(cmd, serData); err != nil; {
 	}
 	send_channel <- response
 }
-func getData[T tools.Serializable](data any) (T, bool) {
+func getData[T tools.Serializable](data []byte) (T, bool) {
 	var structure T
-	mapped, ok := data.(map[string]interface{})
-	if !ok {
-		fmt.Println("[error] - an error occourred...")
-		return structure, false
-	}
-	ser_map, err := tools.SerializeJson(mapped)
-	if err != nil {
-		fmt.Println("[error] - an error occourred...", err)
-		return structure, false
-	}
-	err = tools.Deserializejson(ser_map, &structure)
+  err := tools.Deserializejson(data, &structure)
 	if err != nil {
 		fmt.Println("[error] - an error occourred...", err)
 		return structure, false
 	}
 	return structure, true
+}
+
+// operações com as cartas
+func updateStock(prints int, mu *sync.Mutex) error {
+	mu.Lock()
+	defer mu.Unlock()
+	cards, err := tools.ReadFile[[]tools.Card](CARDSFILE)
+	if err != nil {
+		return err
+	}
+	for id, card := range cards {
+		switch card.Rarity {
+		case "common":
+			card.Qnt += 32 * prints
+		case "uncommon":
+			card.Qnt += 16 * prints
+		case "rare":
+			card.Qnt += 8 * prints
+		case "legendary":
+			card.Qnt += 4 * prints
+		default:
+			fmt.Println("Unknown type")
+		}
+		cards[id] = card
+	}
+	serialized, err := json.MarshalIndent(cards, "", " ")
+	if err != nil {
+		return err
+	}
+	_, err = tools.OverwriteFile(CARDSFILE, serialized)
+	return err
+}
+
+func generateBooster(mu *sync.Mutex) ([]tools.Card, error) {
+	mu.Lock()
+	defer mu.Unlock()
+	cards, err := tools.ReadFile[[]tools.Card](CARDSFILE)
+	if err != nil {
+		return make([]tools.Card, 0), nil
+	}
+
+	booster := make([]tools.Card, 0)
+
+	for len(booster) < 5 {
+		rand_id := rand.IntN(len(cards))
+		if cards[rand_id].Qnt > 0 {
+      card := cards[rand_id]
+      card.Qnt = 1 // apenas uma cópia
+			booster = append(booster, card)
+			cards[rand_id].Qnt--
+		}
+	}
+
+	serialized, err := json.MarshalIndent(cards, "", " ")
+	if err != nil {
+		return make([]tools.Card, 0), err
+	}
+	_, err = tools.OverwriteFile(CARDSFILE, serialized)
+	return booster, err
 }

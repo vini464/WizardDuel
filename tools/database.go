@@ -7,7 +7,7 @@ import (
 
 // Esse módulo é responssável pelo controle de arquivos
 
-func readFile[T Serializable](filename string) (T, error) {
+func ReadFile[T Serializable](filename string) (T, error) {
 	file, err := os.ReadFile(filename)
 	if err != nil {
 		var data T
@@ -19,7 +19,7 @@ func readFile[T Serializable](filename string) (T, error) {
 }
 
 // sobreescreve o arquivo indicado com os dados enviados
-func overwriteFile(filename string, data []byte) (int, error) {
+func OverwriteFile(filename string, data []byte) (int, error) {
 	file, err := os.Create(filename)
 	if err != nil {
 		return 0, err
@@ -34,7 +34,7 @@ func CreateUser(credentials UserCredentials, filename string, mu *sync.Mutex) (b
   mu.Lock()
   defer mu.Unlock()
 	// lendo o arquivo de usurários
-	users, err := readFile[[]UserData](filename)
+	users, err := ReadFile[[]UserData](filename)
 	if err != nil {
 		//return false, err.Error()
     users = make([]UserData, 0) 
@@ -47,7 +47,7 @@ func CreateUser(credentials UserCredentials, filename string, mu *sync.Mutex) (b
 		}
 	}
 
-	new_user := UserData{Username: credentials.USER, Password: credentials.PSWD, Coins: 0, SavedDecks: nil, MainDeck: Deck{}}
+	new_user := UserData{Username: credentials.USER, Password: credentials.PSWD, Coins: 0, SavedDecks: nil, MainDeck: Deck{}, AllCards: nil}
 
 	users = append(users, new_user)
 
@@ -56,7 +56,7 @@ func CreateUser(credentials UserCredentials, filename string, mu *sync.Mutex) (b
 		return false, "Error While Serializing"
 	}
 
-	b, err := overwriteFile(filename, serialized)
+	b, err := OverwriteFile(filename, serialized)
 	if err != nil || b == 0 {
 		return false, "Couldn't Save The File"
 	}
@@ -66,7 +66,7 @@ func CreateUser(credentials UserCredentials, filename string, mu *sync.Mutex) (b
 func DeleteUser(user_info UserCredentials, filename string, mu *sync.Mutex) (bool, error) {
   mu.Lock()
   defer mu.Unlock()
-	users, err := readFile[[]UserData](filename)
+	users, err := ReadFile[[]UserData](filename)
 	if err != nil {
 		return false, err
 	}
@@ -79,7 +79,7 @@ func DeleteUser(user_info UserCredentials, filename string, mu *sync.Mutex) (boo
 		if err != nil {
 			return false, err
 		}
-		_, err = overwriteFile(filename, serialized)
+		_, err = OverwriteFile(filename, serialized)
 		if err != nil {
 			return false, err
 		}
@@ -91,7 +91,7 @@ func DeleteUser(user_info UserCredentials, filename string, mu *sync.Mutex) (boo
 func UpdateUser(credentials UserCredentials, new_data UserData, filename string, mu *sync.Mutex) (bool, error) {
   mu.Lock()
   defer mu.Unlock()
-	users, err := readFile[[]UserData](filename)
+	users, err := ReadFile[[]UserData](filename)
 	if err != nil {
 		return false, err
 	}
@@ -104,7 +104,7 @@ func UpdateUser(credentials UserCredentials, new_data UserData, filename string,
 		if err != nil {
 			return false, err
 		}
-		_, err = overwriteFile(filename, serialized)
+		_, err = OverwriteFile(filename, serialized)
 		if err != nil {
 			return false, err
 		}
@@ -125,5 +125,5 @@ func findUser(credetials UserCredentials, users []UserData) (int, bool) {
 func GetUsers(filename string, mu *sync.Mutex) ([]UserData, error) {
   mu.Lock()
   defer mu.Unlock()
-	return readFile[[]UserData](filename)
+	return ReadFile[[]UserData](filename)
 }

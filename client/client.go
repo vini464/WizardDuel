@@ -13,6 +13,8 @@ import (
 	"github.com/vini464/WizardDuel/tools"
 )
 
+var USERDATA tools.UserData
+
 func main() {
 	conn, err := net.Dial(tools.SERVER_TYPE, tools.PATH)
 	if err != nil {
@@ -48,7 +50,8 @@ func handleConnection(conn net.Conn) {
 		}
 		var serialized []byte
 		var err error
-		for serialized, err = tools.SerializeMessage(cmd, credentials); err != nil; {
+    serData, _ := tools.SerializeJson(credentials)
+		for serialized, err = tools.SerializeMessage(cmd, serData); err != nil; {
 		}
 		send_channel <- serialized
 		rec_bytes := <-receive_channel
@@ -61,16 +64,20 @@ func handleConnection(conn net.Conn) {
 		switch response.CMD {
 		case "ok":
 			if c == "1" {
-				//fmt.Println("Your Are Logged!")
+        var ok bool
+        USERDATA, ok = getData[tools.UserData](response.DATA)
+        if !ok {
+          fmt.Println("[error]")
+        }
 				online(credentials, send_channel, receive_channel, error_channel)
 			} else {
 				fmt.Println("User registered successfully")
 			}
 		case "error":
 			if c == "1" {
-				fmt.Println("Unable to login:", response.DATA)
+				fmt.Println("Unable to login:", string(response.DATA))
 			} else {
-				fmt.Println("Unable to register:", response.DATA)
+				fmt.Println("Unable to register:", string(response.DATA))
 			}
 		default:
 			fmt.Println("Unknown command...", response.CMD)
@@ -95,52 +102,99 @@ func initialPage() string {
 
 func online(credentials tools.UserCredentials, send_channel chan []byte, receive_channel chan []byte, error_channel chan error) {
 	for {
-		choice := menu("EXIT", "PLAY")
-		if choice == 1 {
+		choice := menu("EXIT", "PLAY", "OPEN BOOSTER", "SEE CARDS")
+		if choice == 0 {
 			os.Exit(0)
 		}
-		// iniciando uma partida
-		sendRequest(tools.Play.String(), credentials, send_channel)
-		var receivedData any
-    QUEUE_LOOP:
-		for {
+
+		switch choice {
+		case 1:
+			// iniciando uma partida
+			sendRequest(tools.Play.String(), credentials, send_channel)
+		QUEUE_LOOP:
+			for {
+				select {
+				case serialized := <-receive_channel:
+					var receive tools.Message
+					err := tools.Deserializejson(serialized, &receive)
+					if err != nil {
+						fmt.Println("[error] an error occourred", err)
+						os.Exit(1)
+					}
+					switch receive.CMD {
+					case "ok":
+						fmt.Println("You are playing with: ", receive.DATA) // receive.Data vai ser o GameState
+						match(receive.DATA, credentials, send_channel)
+						break QUEUE_LOOP // só sai do loop quando encontrar uma partida
+					case "error":
+						fmt.Println("Unable to Play:", receive.DATA)
+						break QUEUE_LOOP // só sai do loop quando encontrar uma partida
+					case "queued":
+						fmt.Println("Waiting for an opponent...")
+					default:
+						fmt.Println("[error] unknown command:", receive.CMD)
+						break QUEUE_LOOP // só sai do loop quando encontrar uma partida
+					}
+				case err := <-error_channel:
+					fmt.Println("[error] an error occourred", err)
+				}
+			}
+		case 2:
+			sendRequest(tools.GetBooster.String(), "", send_channel)
 			select {
 			case serialized := <-receive_channel:
-				var receive tools.Message
-				err := tools.Deserializejson(serialized, &receive)
+				var msg tools.Message
+				err := tools.Deserializejson(serialized, &msg)
 				if err != nil {
 					fmt.Println("[error] an error occourred", err)
 					os.Exit(1)
 				}
-				switch receive.CMD {
-				case "ok":
-					fmt.Println("You are playing with: ", receive.DATA) // receive.Data vai ser o GameState
-					receivedData = receive.DATA
-          match(receivedData, credentials, send_channel)
-					break QUEUE_LOOP // só sai do loop quando encontrar uma partida
-				case "error":
-					fmt.Println("Unable to Play:", receive.DATA)
-					break QUEUE_LOOP // só sai do loop quando encontrar uma partida
-				case "queued":
-					fmt.Println("Waiting for an opponent...")
-				default:
-					fmt.Println("[error] unknown command:", receive.CMD)
-					break QUEUE_LOOP // só sai do loop quando encontrar uma partida
-				}
+        data, ok := getData[[]tools.Card](msg.DATA)
+        if !ok {
+          fmt.Println("error")
+          return
+        }
+        if (USERDATA.AllCards == nil) {
+          USERDATA.AllCards = make([]tools.Card, 0)
+        }
+        for _, card := range data {
+          fmt.Println(card)
+          found := false
+          for id, c := range USERDATA.AllCards {
+            if card.Name == c.Name {
+              USERDATA.AllCards[id].Qnt ++
+              found = true
+              break
+            } 
+          }
+          if !found {
+            USERDATA.AllCards = append(USERDATA.AllCards, card)
+          }
+        }
 			case err := <-error_channel:
 				fmt.Println("[error] an error occourred", err)
 			}
+    case 3: 
+        for _, card := range USERDATA.AllCards {
+          fmt.Println(card)
+      }
+      
+
 		}
 		// em uma partida
 		fmt.Println("out of the select")
 	}
 }
 
-func match(receivedData any, credentials tools.UserCredentials, send_channel chan []byte) {
+func match(receivedData []byte, credentials tools.UserCredentials, send_channel chan []byte) {
 	for {
 		fmt.Println("inside game loop")
 		exec.Command("clear")
-		gamestate := getData[tools.GameState](receivedData)
+		gamestate, ok := getData[tools.GameState](receivedData)
+    if !ok{
+      fmt.Println("erro")
+      return
+    }
 		fmt.Println("TURN:", gamestate.Turn)
 		fmt.Println("PHASE:", gamestate.Phase)
 
@@ -179,24 +233,17 @@ func match(receivedData any, credentials tools.UserCredentials, send_channel cha
 	}
 }
 
-func menu(last string, args ...string) int {
-	maxOpt := len(args)
-	if last == "" {
-		maxOpt--
-	}
+func menu(args ...string) int {
 	for {
 		for id, arg := range args {
 			fmt.Println(id, "-", arg)
-		}
-		if last != "" {
-			fmt.Println(len(args), "-", "Back")
 		}
 		input := tools.Input("Select a number\n> ")
 		choice, err := strconv.Atoi(input)
 		if err != nil {
 			fmt.Println("opção inválida!")
 		}
-		if choice >= 0 && choice <= maxOpt {
+		if choice >= 0 && choice < len(args) {
 			return choice
 		}
 	}
@@ -205,7 +252,7 @@ func menu(last string, args ...string) int {
 func mainPhase(hand []tools.Card, send_channel chan []byte) {
 	for {
 		for id, card := range hand {
-			fmt.Println(id, "-", card.NAME, "{ cost:", card.COST, "efects:", card.EFFECTS, "}")
+			fmt.Println(id, "-", card.Name, "{ cost:", card.Cost, "efects:", card.Effects, "}")
 		}
 		fmt.Println(len(hand), " - skip")
 		input := tools.Input("Select a number\n> ")
@@ -218,7 +265,7 @@ func mainPhase(hand []tools.Card, send_channel chan []byte) {
 				sendRequest(tools.SkipPhase.String(), "", send_channel)
 				return // encerra a função
 			}
-			sendRequest(tools.PlaceCard.String(), hand[choice].NAME, send_channel)
+			sendRequest(tools.PlaceCard.String(), hand[choice].Name, send_channel)
 			return
 		} else {
 			fmt.Println("opção inválida!")
@@ -226,28 +273,19 @@ func mainPhase(hand []tools.Card, send_channel chan []byte) {
 	}
 }
 
-func getData[T tools.Serializable](data any) T {
-	mapped, ok := data.(map[string]interface{})
-	if !ok {
-		fmt.Println("(!ok)[error] - an error occourred...")
-		os.Exit(1)
-	}
-	ser_map, err := tools.SerializeJson(mapped)
-	if err != nil {
-		fmt.Println("(err)[error] - an error occourred...", err)
-		os.Exit(1)
-	}
+func getData[T tools.Serializable](data []byte) (T, bool) {
 	var structure T
-	err = tools.Deserializejson(ser_map, &structure)
+  err := tools.Deserializejson(data, &structure)
 	if err != nil {
-		fmt.Println("(err)[error] - an error occourred...", err)
-		os.Exit(1)
+		fmt.Println("[error] - an error occourred...", err)
+		return structure, false
 	}
-	return structure
+	return structure, true
 }
 
-func sendRequest(cmd string, data any, send_channel chan []byte) {
-	response, err := tools.SerializeMessage(cmd, data)
+func sendRequest[T tools.Serializable](cmd string, data T, send_channel chan []byte) {
+  serData, _ := tools.SerializeJson(data)
+	response, err := tools.SerializeMessage(cmd, serData)
 	if err != nil {
 		os.Exit(1)
 	}

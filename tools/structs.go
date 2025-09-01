@@ -1,5 +1,6 @@
 package tools
 
+
 type TurnPhase int
 type Cmd int
 
@@ -52,7 +53,7 @@ func (cmd Cmd) String() string {
 
 type Message struct {
 	CMD  string `json:"cmd"`
-	DATA any    `json:"data.omitempty"`
+	DATA []byte    `json:"data.omitempty"`
 }
 
 type UserCredentials struct {
@@ -71,17 +72,21 @@ type UserData struct {
 	Coins      int    `json:"coins"`
 	SavedDecks []Deck `json:"savedDecks"`
 	MainDeck   Deck   `json:"mainDeck"`
+	AllCards   []Card `json:"allCards"`
 }
 
 type Effect struct {
-	TYPE   string `json:"type"`
-	AMOUNT int    `json:"amount"`
+	Type   string `json:"type"`
+	Amount int    `json:"amount"`
 }
 
 type Card struct {
-	NAME    string   `json:"name"`
-	COST    int      `json:"cost"`
-	EFFECTS []Effect `json:"effects"`
+	Qnt     int      `json:"qnt"`
+	Type    string   `json:"type"`
+	Name    string   `json:"name"`
+	Rarity  string   `json:"rarity"`
+	Cost    int      `json:"cost"`
+	Effects []Effect `json:"effects"`
 }
 
 type GameState struct {
@@ -110,7 +115,7 @@ type GameState struct {
 }
 
 type Serializable interface {
-	string | GameState | Message | UserCredentials | Card | Effect | []UserCredentials | UserData | []UserData | map[string]string | map[string]interface{}
+	string | GameState | Message | UserCredentials | Card | []Card | Effect | []UserCredentials | UserData | []UserData | map[string]string | map[string]interface{} |[]map[string]interface{}
 }
 
 func NextPhase(actualPhase TurnPhase) TurnPhase {
@@ -130,12 +135,12 @@ func NextPhase(actualPhase TurnPhase) TurnPhase {
 	}
 }
 
-func CreateMessage(cmd string, data any) Message {
+func CreateMessage(cmd string, data []byte) Message {
 	messase := Message{CMD: cmd, DATA: data}
 	return messase
 }
 
-func SerializeMessage(cmd string, data any) ([]byte, error) {
+func SerializeMessage(cmd string, data []byte) ([]byte, error) {
 	message := CreateMessage(cmd, data)
 	serialzed, err := SerializeJson(message)
 	return serialzed, err

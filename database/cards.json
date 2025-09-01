@@ -1,0 +1,1014 @@
+[
+ {
+  "qnt": 192000,
+  "type": "nature",
+  "name": "Vital Sprout",
+  "rarity": "common",
+  "cost": 1,
+  "effects": [
+   {
+    "type": "heal",
+    "amount": 2
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "nature",
+  "name": "Protective Leaf",
+  "rarity": "common",
+  "cost": 1,
+  "effects": [
+   {
+    "type": "shield",
+    "amount": 2
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "nature",
+  "name": "Renewing Root",
+  "rarity": "common",
+  "cost": 2,
+  "effects": [
+   {
+    "type": "heal",
+    "amount": 3
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "nature",
+  "name": "Growth",
+  "rarity": "common",
+  "cost": 2,
+  "effects": [
+   {
+    "type": "energy",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "nature",
+  "name": "Forest Reinforcement",
+  "rarity": "common",
+  "cost": 3,
+  "effects": [
+   {
+    "type": "shield",
+    "amount": 3
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "nature",
+  "name": "Green Pulse",
+  "rarity": "common",
+  "cost": 3,
+  "effects": [
+   {
+    "type": "heal",
+    "amount": 4
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "nature",
+  "name": "Growing Foliage",
+  "rarity": "common",
+  "cost": 2,
+  "effects": [
+   {
+    "type": "energy",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "nature",
+  "name": "Strong Branches",
+  "rarity": "common",
+  "cost": 2,
+  "effects": [
+   {
+    "type": "shield",
+    "amount": 2
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "nature",
+  "name": "Small Renewal",
+  "rarity": "common",
+  "cost": 1,
+  "effects": [
+   {
+    "type": "heal",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "nature",
+  "name": "Vital Seed",
+  "rarity": "common",
+  "cost": 1,
+  "effects": [
+   {
+    "type": "heal",
+    "amount": 1
+   },
+   {
+    "type": "energy",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "nature",
+  "name": "Natural Vitality",
+  "rarity": "uncommon",
+  "cost": 4,
+  "effects": [
+   {
+    "type": "shield",
+    "amount": 5
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "nature",
+  "name": "Sustainable Renewal",
+  "rarity": "uncommon",
+  "cost": 4,
+  "effects": [
+   {
+    "type": "heal",
+    "amount": 5
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "nature",
+  "name": "Razor Leaf",
+  "rarity": "uncommon",
+  "cost": 3,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 3
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "nature",
+  "name": "Quick Sprout",
+  "rarity": "uncommon",
+  "cost": 3,
+  "effects": [
+   {
+    "type": "heal",
+    "amount": 3
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "nature",
+  "name": "Protective Root",
+  "rarity": "uncommon",
+  "cost": 5,
+  "effects": [
+   {
+    "type": "shield",
+    "amount": 6
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "nature",
+  "name": "Wild Growth",
+  "rarity": "uncommon",
+  "cost": 5,
+  "effects": [
+   {
+    "type": "energy",
+    "amount": 2
+   }
+  ]
+ },
+ {
+  "qnt": 48000,
+  "type": "nature",
+  "name": "Wall of Branches",
+  "rarity": "rare",
+  "cost": 6,
+  "effects": [
+   {
+    "type": "shield",
+    "amount": 7
+   }
+  ]
+ },
+ {
+  "qnt": 48000,
+  "type": "nature",
+  "name": "Breath of Life",
+  "rarity": "rare",
+  "cost": 6,
+  "effects": [
+   {
+    "type": "heal",
+    "amount": 7
+   }
+  ]
+ },
+ {
+  "qnt": 48000,
+  "type": "nature",
+  "name": "Earth Punch",
+  "rarity": "rare",
+  "cost": 5,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 6
+   }
+  ]
+ },
+ {
+  "qnt": 48000,
+  "type": "nature",
+  "name": "Decay",
+  "rarity": "rare",
+  "cost": 5,
+  "effects": [
+   {
+    "type": "destroy_enemy_shield",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 24000,
+  "type": "nature",
+  "name": "Heart of the Forest",
+  "rarity": "legendary",
+  "cost": 8,
+  "effects": [
+   {
+    "type": "shield",
+    "amount": 8
+   },
+   {
+    "type": "heal",
+    "amount": 5
+   }
+  ]
+ },
+ {
+  "qnt": 24000,
+  "type": "nature",
+  "name": "Wrath of Gaia",
+  "rarity": "legendary",
+  "cost": 10,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 10
+   },
+   {
+    "type": "heal",
+    "amount": 10
+   }
+  ]
+ },
+ {
+  "qnt": 48000,
+  "type": "nature",
+  "name": "Energetic Sprout",
+  "rarity": "rare",
+  "cost": 3,
+  "effects": [
+   {
+    "type": "energy",
+    "amount": 2
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "nature",
+  "name": "Reinforced Leaf",
+  "rarity": "common",
+  "cost": 4,
+  "effects": [
+   {
+    "type": "shield",
+    "amount": 4
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "fire",
+  "name": "Rebel Spark",
+  "rarity": "common",
+  "cost": 1,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "fire",
+  "name": "Blaze",
+  "rarity": "common",
+  "cost": 2,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 3
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "fire",
+  "name": "Quick Flame",
+  "rarity": "common",
+  "cost": 2,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 2
+   },
+   {
+    "type": "next_spell_damage_bonus",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "fire",
+  "name": "Flaming Strike",
+  "rarity": "common",
+  "cost": 3,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 4
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "fire",
+  "name": "Igneous Impact",
+  "rarity": "common",
+  "cost": 3,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 4
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "fire",
+  "name": "Burning Fire",
+  "rarity": "common",
+  "cost": 4,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 5
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "fire",
+  "name": "Flame Shard",
+  "rarity": "common",
+  "cost": 1,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 2
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "fire",
+  "name": "Double Spark",
+  "rarity": "common",
+  "cost": 2,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 2
+   },
+   {
+    "type": "damage",
+    "amount": 2
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "fire",
+  "name": "Burning Ember",
+  "rarity": "common",
+  "cost": 3,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 3
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "fire",
+  "name": "Continuous Flame",
+  "rarity": "common",
+  "cost": 3,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 2
+   },
+   {
+    "type": "shield",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "fire",
+  "name": "Flame Burst",
+  "rarity": "uncommon",
+  "cost": 4,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 6
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "fire",
+  "name": "Volatile Explosion",
+  "rarity": "uncommon",
+  "cost": 5,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 7
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "fire",
+  "name": "Torch of Fury",
+  "rarity": "uncommon",
+  "cost": 4,
+  "effects": [
+   {
+    "type": "next_spell_damage_bonus",
+    "amount": 2
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "fire",
+  "name": "Potent Blaze",
+  "rarity": "uncommon",
+  "cost": 5,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 6
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "fire",
+  "name": "Rising Flame",
+  "rarity": "uncommon",
+  "cost": 6,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 8
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "fire",
+  "name": "Devastating Fire",
+  "rarity": "uncommon",
+  "cost": 5,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 7
+   }
+  ]
+ },
+ {
+  "qnt": 48000,
+  "type": "fire",
+  "name": "Magma Eruption",
+  "rarity": "rare",
+  "cost": 7,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 9
+   }
+  ]
+ },
+ {
+  "qnt": 48000,
+  "type": "fire",
+  "name": "Overwhelming Inferno",
+  "rarity": "rare",
+  "cost": 8,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 10
+   }
+  ]
+ },
+ {
+  "qnt": 48000,
+  "type": "fire",
+  "name": "Cutting Embers",
+  "rarity": "rare",
+  "cost": 6,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 8
+   }
+  ]
+ },
+ {
+  "qnt": 48000,
+  "type": "fire",
+  "name": "Infernal Explosion",
+  "rarity": "rare",
+  "cost": 7,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 9
+   }
+  ]
+ },
+ {
+  "qnt": 24000,
+  "type": "fire",
+  "name": "Eternal Flame",
+  "rarity": "legendary",
+  "cost": 10,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 12
+   }
+  ]
+ },
+ {
+  "qnt": 24000,
+  "type": "fire",
+  "name": "Supreme Hellfire",
+  "rarity": "legendary",
+  "cost": 10,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 15
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "fire",
+  "name": "Initial Spark",
+  "rarity": "common",
+  "cost": 2,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 1
+   },
+   {
+    "type": "draw",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "fire",
+  "name": "Fireburst",
+  "rarity": "uncommon",
+  "cost": 4,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 5
+   },
+   {
+    "type": "shield",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "water",
+  "name": "Healing Drop",
+  "rarity": "common",
+  "cost": 1,
+  "effects": [
+   {
+    "type": "heal",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "water",
+  "name": "Light Wave",
+  "rarity": "common",
+  "cost": 1,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 2
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "water",
+  "name": "Calm Mist",
+  "rarity": "common",
+  "cost": 2,
+  "effects": [
+   {
+    "type": "draw",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "water",
+  "name": "Stream",
+  "rarity": "common",
+  "cost": 2,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 2
+   },
+   {
+    "type": "heal",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 191998,
+  "type": "water",
+  "name": "Whirlpool",
+  "rarity": "common",
+  "cost": 3,
+  "effects": [
+   {
+    "type": "draw",
+    "amount": 2
+   },
+   {
+    "type": "discard",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "water",
+  "name": "Water Pulse",
+  "rarity": "common",
+  "cost": 3,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 3
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "water",
+  "name": "Gentle Tide",
+  "rarity": "common",
+  "cost": 2,
+  "effects": [
+   {
+    "type": "heal",
+    "amount": 2
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "water",
+  "name": "Small Torrent",
+  "rarity": "common",
+  "cost": 3,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 2
+   },
+   {
+    "type": "shield",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "water",
+  "name": "Water Reflection",
+  "rarity": "common",
+  "cost": 2,
+  "effects": [
+   {
+    "type": "draw",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "water",
+  "name": "Light Waterfall",
+  "rarity": "common",
+  "cost": 3,
+  "effects": [
+   {
+    "type": "heal",
+    "amount": 3
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "water",
+  "name": "Rising Tide",
+  "rarity": "uncommon",
+  "cost": 4,
+  "effects": [
+   {
+    "type": "heal",
+    "amount": 3
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "water",
+  "name": "Vortex",
+  "rarity": "uncommon",
+  "cost": 4,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 4
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "water",
+  "name": "Harmonious Flow",
+  "rarity": "uncommon",
+  "cost": 5,
+  "effects": [
+   {
+    "type": "draw",
+    "amount": 3
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "water",
+  "name": "Torrent",
+  "rarity": "uncommon",
+  "cost": 5,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 5
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "water",
+  "name": "Powerful Whirlpool",
+  "rarity": "uncommon",
+  "cost": 5,
+  "effects": [
+   {
+    "type": "draw",
+    "amount": 2
+   },
+   {
+    "type": "damage",
+    "amount": 2
+   }
+  ]
+ },
+ {
+  "qnt": 96000,
+  "type": "water",
+  "name": "Deep Pulse",
+  "rarity": "uncommon",
+  "cost": 4,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 4
+   }
+  ]
+ },
+ {
+  "qnt": 24000,
+  "type": "water",
+  "name": "Tsunami",
+  "rarity": "legendary",
+  "cost": 10,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 10
+   },
+   {
+    "type": "heal",
+    "amount": 5
+   }
+  ]
+ },
+ {
+  "qnt": 48000,
+  "type": "water",
+  "name": "Seaquake",
+  "rarity": "rare",
+  "cost": 6,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 6
+   },
+   {
+    "type": "heal",
+    "amount": 4
+   }
+  ]
+ },
+ {
+  "qnt": 48000,
+  "type": "water",
+  "name": "Wild Tide",
+  "rarity": "rare",
+  "cost": 7,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 7
+   }
+  ]
+ },
+ {
+  "qnt": 48000,
+  "type": "water",
+  "name": "Relentless Current",
+  "rarity": "rare",
+  "cost": 6,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 5
+   },
+   {
+    "type": "draw",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 48000,
+  "type": "water",
+  "name": "Abyss Leviathan",
+  "rarity": "rare",
+  "cost": 8,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 8
+   },
+   {
+    "type": "draw",
+    "amount": 2
+   }
+  ]
+ },
+ {
+  "qnt": 24000,
+  "type": "water",
+  "name": "Ancient Leviathan",
+  "rarity": "legendary",
+  "cost": 10,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 12
+   },
+   {
+    "type": "draw",
+    "amount": 3
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "water",
+  "name": "Healing Flow",
+  "rarity": "common",
+  "cost": 3,
+  "effects": [
+   {
+    "type": "heal",
+    "amount": 3
+   },
+   {
+    "type": "energy",
+    "amount": 1
+   }
+  ]
+ },
+ {
+  "qnt": 192000,
+  "type": "water",
+  "name": "Dancing Waves",
+  "rarity": "common",
+  "cost": 4,
+  "effects": [
+   {
+    "type": "damage",
+    "amount": 4
+   },
+   {
+    "type": "shield",
+    "amount": 1
+   }
+  ]
+ }
+]
