@@ -11,27 +11,27 @@ import (
 type PlayerInfo struct {
 	Username     string
 	Send_channel chan []byte
-	Data         tools.UserData
 	Paried       bool
-	MainDeck     tools.Deck
+	Data         tools.UserData
 	// iformações disponíveis apenas se pariado
 	Gamestate        tools.GameState
 	PrivateGameState *PrivateGameState // o mesmo para ambos jogadores
 }
 
 type PlayerGameData struct {
-	Hand      []tools.Card
-	Deck      []tools.Card
-	Graveyard []tools.Card
-	HP        int
-	SP        int
-	Energy    int
-	Crystals  int
+	Username    string
+	Hand        []tools.Card
+	Deck        []tools.Card
+	Graveyard   []tools.Card
+	HP          int
+	SP          int
+	Energy      int
+	Crystals    int
 	DamageBonus int
 }
 
 type PrivateGameState struct {
-	mutex       sync.Mutex
+	Mutex       *sync.Mutex
 	PlayersData map[string]PlayerGameData // map entre o username e os dados
 	Turn        string
 	Phase       string
@@ -45,7 +45,7 @@ type Action struct {
 }
 
 // atualiza o estado de jogo a partir de uma ação feita pelo jogador1 retorna os estados de jogo dos dois jogadores
-func UpdatePrivateGamestate(player1 *PlayerInfo, player2 *PlayerInfo, action Action, mutex *sync.Mutex) (tools.GameState, tools.GameState) {
+func UpdatePrivateGamestate(player1 *PlayerInfo, player2 *PlayerInfo, action Action, mutex *sync.Mutex) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	gamestate := player1.PrivateGameState
@@ -58,8 +58,8 @@ func UpdatePrivateGamestate(player1 *PlayerInfo, player2 *PlayerInfo, action Act
 		if gamestate.Phase == tools.End.String() {
 			gamestate.Turn = player2.Username
 			p1_data.DamageBonus = 0
-			if len(p1_data.Hand) + len(p1_data.Deck) == 0 {
-				p1_data.HP -- 
+			if len(p1_data.Hand)+len(p1_data.Deck) == 0 {
+				p1_data.HP--
 			}
 		}
 		gamestate.Phase = tools.NextPhase(gamestate.Phase)
@@ -68,7 +68,7 @@ func UpdatePrivateGamestate(player1 *PlayerInfo, player2 *PlayerInfo, action Act
 			switch effect.Type {
 			case "damage":
 				damage := effect.Amount + p1_data.DamageBonus
-				extra := p2_data.SP - damage 
+				extra := p2_data.SP - damage
 				p2_data.SP -= damage
 				if p2_data.SP < 0 {
 					p2_data.SP = 0
@@ -111,8 +111,19 @@ func UpdatePrivateGamestate(player1 *PlayerInfo, player2 *PlayerInfo, action Act
 	gamestate.PlayersData[player1.Username] = p1_data
 
 	// atribuindo os dados para os gamestates que serão enviados aos jogadores
+}
+
+func UpdatePublicGamestate(privateGameState *PrivateGameState) (tools.GameState, tools.GameState) {
+	usernames := make([]string, 2)
+	i := 0
+	for a := range privateGameState.PlayersData {
+		usernames[i] = a
+		i++
+	}
+	p1_data := privateGameState.PlayersData[usernames[0]]
+	p2_data := privateGameState.PlayersData[usernames[1]]
 	p1_gamestate := tools.GameState{}
-	p1_gamestate.Opponent.Username = player2.Username
+	p1_gamestate.Opponent.Username = usernames[1]
 	p1_gamestate.Opponent.Hand = len(p2_data.Hand)
 	p1_gamestate.Opponent.Deck = len(p2_data.Deck)
 	p1_gamestate.Opponent.Graveyard = p2_data.Graveyard
@@ -120,9 +131,9 @@ func UpdatePrivateGamestate(player1 *PlayerInfo, player2 *PlayerInfo, action Act
 	p1_gamestate.Opponent.SP = p2_data.SP
 	p1_gamestate.Opponent.HP = p2_data.HP
 	p1_gamestate.Opponent.Energy = p2_data.Energy
-	p1_gamestate.Phase = gamestate.Phase
-	p1_gamestate.Turn = gamestate.Turn
-	p1_gamestate.Round = gamestate.Round
+	p1_gamestate.Phase = privateGameState.Phase
+	p1_gamestate.Turn = privateGameState.Turn
+	p1_gamestate.Round = privateGameState.Round
 	p1_gamestate.You.Hand = p1_data.Hand
 	p1_gamestate.You.Graveyard = p1_data.Graveyard
 	p1_gamestate.You.Deck = len(p1_data.Deck)
@@ -132,7 +143,7 @@ func UpdatePrivateGamestate(player1 *PlayerInfo, player2 *PlayerInfo, action Act
 	p1_gamestate.You.Energy = p1_data.Energy
 
 	p2_gamestate := tools.GameState{}
-	p2_gamestate.Opponent.Username = player1.Username
+	p2_gamestate.Opponent.Username = usernames[0]
 	p2_gamestate.Opponent.Hand = len(p1_data.Hand)
 	p2_gamestate.Opponent.Deck = len(p1_data.Deck)
 	p2_gamestate.Opponent.Graveyard = p1_data.Graveyard
@@ -140,9 +151,9 @@ func UpdatePrivateGamestate(player1 *PlayerInfo, player2 *PlayerInfo, action Act
 	p2_gamestate.Opponent.SP = p1_data.SP
 	p2_gamestate.Opponent.HP = p1_data.HP
 	p2_gamestate.Opponent.Energy = p1_data.Energy
-	p2_gamestate.Phase = gamestate.Phase
-	p2_gamestate.Turn = gamestate.Turn
-	p2_gamestate.Round = gamestate.Round
+	p2_gamestate.Phase = privateGameState.Phase
+	p2_gamestate.Turn = privateGameState.Turn
+	p2_gamestate.Round = privateGameState.Round
 	p2_gamestate.You.Hand = p2_data.Hand
 	p2_gamestate.You.Graveyard = p2_data.Graveyard
 	p2_gamestate.You.Deck = len(p2_data.Deck)
@@ -152,4 +163,5 @@ func UpdatePrivateGamestate(player1 *PlayerInfo, player2 *PlayerInfo, action Act
 	p2_gamestate.You.Energy = p2_data.Energy
 
 	return p1_gamestate, p2_gamestate
+
 }
