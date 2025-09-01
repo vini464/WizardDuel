@@ -82,7 +82,6 @@ type Effect struct {
 }
 
 type Card struct {
-	Qnt     int      `json:"qnt"`
 	Type    string   `json:"type"`
 	Name    string   `json:"name"`
 	Rarity  string   `json:"rarity"`

@@ -165,3 +165,20 @@ func UpdatePublicGamestate(privateGameState *PrivateGameState) (tools.GameState,
 	return p1_gamestate, p2_gamestate
 
 }
+
+
+func GetBooster(filename string, mutex *sync.Mutex) []tools.Card {
+	mutex.Lock()
+	defer mutex.Unlock()
+	
+	booster := make([]tools.Card, 0)
+	box := RetrieveAllCards(filename)
+	for range 5 {
+		if len(box) > 0 {
+			r := rand.IntN(len(box))
+			booster = append(booster, box[r])
+			box = append(box[:r], box[r+1:]...)
+		}
+	}
+	return booster
+}

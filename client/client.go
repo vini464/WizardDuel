@@ -159,17 +159,7 @@ func online(credentials tools.UserCredentials, send_channel chan []byte, receive
         }
         for _, card := range data {
           fmt.Println(card)
-          found := false
-          for id, c := range USERDATA.AllCards {
-            if card.Name == c.Name {
-              USERDATA.AllCards[id].Qnt ++
-              found = true
-              break
-            } 
-          }
-          if !found {
             USERDATA.AllCards = append(USERDATA.AllCards, card)
-          }
         }
 			case err := <-error_channel:
 				fmt.Println("[error] an error occourred", err)

@@ -6,9 +6,7 @@ import (
 	"io"
 	"math/rand/v2"
 	"net"
-	"os"
 	"sync"
-	"time"
 
 	"github.com/vini464/WizardDuel/server/internal"
 	"github.com/vini464/WizardDuel/tools"
@@ -17,6 +15,7 @@ import (
 const (
 	USERDB    = "database/users.json"
 	CARDSFILE = "database/cards.json"
+	CARDBOX   = "database/cardbox.json"
 )
 
 var QUEUE = make([]*internal.PlayerGameData, 0)
@@ -30,19 +29,14 @@ func main() {
 
 	// Verifica a quantidade do stock
 	sum := 0
-	cards, err := tools.ReadFile[[]tools.Card](CARDSFILE)
-	if err != nil {
-		fmt.Println("Some shit happen :/", err)
-		os.Exit(1)
-	} else {
-		for _, card := range cards {
-			sum += card.Qnt
-		}
-		if sum < 6000 && sum > 0 {
-			updateStock(6000%sum, &card_mu) // atualiza a quantidade de cartas se ela estiver abaixo do mínimo
-		} else if sum == 0 {
-			updateStock(6000, &card_mu) // atualiza a quantidade de cartas se ela estiver abaixo do mínimo
-		}
+	box := internal.RetrieveAllCards(CARDBOX)
+	for range box {
+		sum++
+	}
+	if sum < 6000 && sum > 0 {
+		updateStock(6000%sum, &card_mu) // atualiza a quantidade de cartas se ela estiver abaixo do mínimo
+	} else if sum == 0 {
+		updateStock(6000, &card_mu) // atualiza a quantidade de cartas se ela estiver abaixo do mínimo
 	}
 
 	fmt.Println("[debug] - iniciando o servidor...")
@@ -89,7 +83,7 @@ LOOP:
 				var index int
 				found := false
 				for id, user := range QUEUE {
-					if user == username {
+					if user.Username == username {
 						found = true
 						index = id
 						break
@@ -144,26 +138,14 @@ func handleReceive(send_channel chan []byte, income []byte, username *string, mu
 		play(*username, send_channel, q_mu, p_mu)
 		fmt.Println("mutext unlocked")
 	case tools.GetBooster.String():
-		booster, err := generateBooster(c_mu)
-		if err != nil {
-			sendResponse("error", "Internal Error", send_channel)
-		}
+		booster := internal.GetBooster(CARDBOX, c_mu)
 		// adding cards to player data
 		mu.Lock()
 		if ONLINE_PLAYERS[*username].Data.AllCards == nil {
 			ONLINE_PLAYERS[*username].Data.AllCards = make([]tools.Card, 0)
 		}
 		for _, op_card := range booster {
-			found := false
-			for id, card := range ONLINE_PLAYERS[*username].Data.AllCards {
-				if op_card.Name == card.Name {
-					found = true
-					ONLINE_PLAYERS[*username].Data.AllCards[id].Qnt++
-				}
-			}
-			if !found {
-				ONLINE_PLAYERS[*username].Data.AllCards = append(ONLINE_PLAYERS[*username].Data.AllCards, op_card)
-			}
+			ONLINE_PLAYERS[*username].Data.AllCards = append(ONLINE_PLAYERS[*username].Data.AllCards, op_card)
 		}
 		defer mu.Unlock()
 		sendResponse("ok", booster, send_channel)
@@ -315,30 +297,32 @@ func getData[T tools.Serializable](data []byte) (T, bool) {
 func updateStock(prints int, mu *sync.Mutex) error {
 	mu.Lock()
 	defer mu.Unlock()
-	cards, err := tools.ReadFile[[]tools.Card](CARDSFILE)
-	if err != nil {
-		return err
-	}
-	for id, card := range cards {
+	box := internal.RetrieveAllCards(CARDBOX)
+	cards := internal.RetrieveAllCards(CARDSFILE)
+	for _, card := range cards {
+		copies := 0
 		switch card.Rarity {
 		case "common":
-			card.Qnt += 32 * prints
+			copies = 32 * prints
 		case "uncommon":
-			card.Qnt += 16 * prints
+			copies = 16 * prints
 		case "rare":
-			card.Qnt += 8 * prints
+			copies = 8 * prints
 		case "legendary":
-			card.Qnt += 4 * prints
+			copies = 4 * prints
 		default:
 			fmt.Println("Unknown type")
 		}
-		cards[id] = card
+		for range copies {
+			box = append(box, card)
+		}
 	}
 	serialized, err := json.MarshalIndent(cards, "", " ")
 	if err != nil {
 		return err
 	}
-	_, err = tools.OverwriteFile(CARDSFILE, serialized)
+	fmt.Println("entrou aqui")
+	_, err = tools.OverwriteFile(CARDBOX, serialized)
 	return err
 }
 
